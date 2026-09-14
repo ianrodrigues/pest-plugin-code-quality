@@ -14,11 +14,12 @@ interface Measurer
      * Measures every method declared in the file at `$path`.
      *
      * The result maps each `Fully\Qualified\Class::method` symbol to its
-     * metric values. A `null` value means the metric does not apply to that
-     * symbol (for example, `ccn2` and `lines` on an abstract or interface
-     * method); `params` is always an `int`.
+     * `[ccn2, lines, params]` metric values, in that order. A `null` value
+     * means the metric does not apply to that symbol (for example, `ccn2`
+     * and `lines` on an abstract or interface method); `params` is always
+     * an `int`.
      *
-     * @return array<string, array{ccn2: int|null, lines: int|null, params: int}>
+     * @return array<string, array{int|null, int|null, int}>
      */
     public function measure(string $path): array;
 }
