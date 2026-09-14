@@ -1,0 +1,5 @@
+services:
+    -
+        class: Rdgs\PestCodeQuality\PHPStan\MethodLimitsExtension
+        tags:
+            - phpstan.broker.methodsClassReflectionExtension

@@ -1,5 +1,6 @@
 includes:
     - vendor/pestphp/pest-plugin-phpstan/extension.neon
+    - extension.neon
 
 parameters:
     level: max
@@ -8,3 +9,5 @@ parameters:
         - tests
     excludePaths:
         - tests/Fixtures/*
+    scanFiles:
+        - tests/Pest.php
