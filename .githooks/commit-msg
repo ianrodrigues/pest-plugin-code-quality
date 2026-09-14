@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# Validates the commit message against Conventional Commits.
+msg_file="$1"
+subject=$(sed -n '1p' "$msg_file")
+
+if ! printf '%s\n' "$subject" | grep -qE '^(feat|fix|docs|test|chore|ci|refactor|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: [^ ].{0,71}$'; then
+  echo "commit-msg: subject must follow Conventional Commits, e.g. 'feat: add method lines expectation' (max 72 chars)" >&2
+  echo "  got: $subject" >&2
+  exit 1
+fi
+if printf '%s\n' "$subject" | grep -qE ': [A-Z][a-z]'; then
+  echo "commit-msg: start the description in lower case" >&2
+  exit 1
+fi
+if printf '%s\n' "$subject" | grep -qE '\.$'; then
+  echo "commit-msg: no trailing period in the subject" >&2
+  exit 1
+fi
+if [ -n "$(sed -n '2p' "$msg_file")" ]; then
+  echo "commit-msg: leave the second line blank" >&2
+  exit 1
+fi
+
+# Optional extra checks, kept outside the repository: any executable in
+# $GIT_DIR/hooks/commit-msg.d/ receives the message file and may reject it.
+common_dir=$(git rev-parse --git-common-dir 2>/dev/null || echo .git)
+for extra in "$common_dir"/hooks/commit-msg.d/*; do
+  [ -x "$extra" ] || continue
+  "$extra" "$msg_file" || exit 1
+done
+exit 0
