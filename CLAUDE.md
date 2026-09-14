@@ -7,6 +7,11 @@ A Pest 5 plugin that adds method-level maintainability limits (complexity, body 
 - Atomic: one logical change per commit. Split unrelated changes even when they were made together.
 - Conventional Commits: `feat:`, `fix:`, `docs:`, `test:`, `chore:`, `ci:`, `refactor:`, `perf:`. Add a body when the subject cannot carry the "why". Describe the change on its own terms.
 
+## Code style
+
+- Class methods use `camelCase()`; standalone functions use `snake_case()`. A test over `src/` enforces this.
+- Comments are rare and concise, and explain why, never what. Code must speak for itself: no prose, no narration of the next lines, no docblocks that restate a signature.
+
 ## Running things
 
 - `composer install` (also enables the git hooks), then `composer check` runs Pint, PHPStan (level max) and Pest.
