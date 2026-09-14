@@ -84,15 +84,15 @@ final class SourceTokens
         $depth = 1;
 
         for ($i = $closeIndex - 1; $i >= 0; $i--) {
-            $id = $this->tokens[$i]->id;
+            $token = $this->tokens[$i];
 
-            if ($id === self::CLOSE_BRACE) {
+            if ($token->id === self::CLOSE_BRACE) {
                 $depth++;
 
                 continue;
             }
 
-            if ($id === self::OPEN_BRACE) {
+            if ($this->isOpenBrace($token)) {
                 $depth--;
 
                 if ($depth === 0) {
@@ -102,6 +102,19 @@ final class SourceTokens
         }
 
         throw new LogicException('No matching opening brace found.');
+    }
+
+    /**
+     * Whether the token opens a brace that a plain `}` closes.
+     *
+     * Interpolated strings open theirs with `{$` or `${`, which tokenize
+     * as `T_CURLY_OPEN` and `T_DOLLAR_OPEN_CURLY_BRACES` rather than as a
+     * literal `{`, while still closing with a plain `}`.
+     */
+    private function isOpenBrace(PhpToken $token): bool
+    {
+        return $token->id === self::OPEN_BRACE
+            || $token->is([\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES]);
     }
 
     private function isSkippable(PhpToken $token): bool
