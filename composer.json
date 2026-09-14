@@ -73,6 +73,11 @@
             "includes": [
                 "extension.neon"
             ]
+        },
+        "pest": {
+            "plugins": [
+                "Rdgs\\PestCodeQuality\\Selection\\Plugins\\OutputPlugin"
+            ]
         }
     }
 }
