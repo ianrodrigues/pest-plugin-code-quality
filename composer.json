@@ -40,7 +40,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Rdgs\\PestCodeQuality\\Tests\\": "tests/"
+            "Rdgs\\PestCodeQuality\\Tests\\": "tests/",
+            "Rdgs\\PestCodeQuality\\Tests\\Fixtures\\App\\": "tests/Fixtures/App/"
         }
     },
     "config": {
