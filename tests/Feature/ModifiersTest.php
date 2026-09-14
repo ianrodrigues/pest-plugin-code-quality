@@ -39,3 +39,9 @@ it('accepts a zero limit and measures against it', function (): void {
 
     expect($chain)->toThrow(QualityExpectationFailed::class, 'Allowed: at most 0');
 });
+
+it('does not read a negation around the chain as a negated limit', function (): void {
+    $chain = policy(fn () => expect(FIXTURE_APP.'\Parsing')->classes()->toHaveMethodComplexityAtMost(20));
+
+    expect($chain)->not->toThrow(UnsupportedModifier::class);
+});
