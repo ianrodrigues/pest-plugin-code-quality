@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+/tests export-ignore
+/.githooks export-ignore
+/.github export-ignore
+/phpstan.neon export-ignore
+/pint.json export-ignore
+/CLAUDE.md export-ignore
