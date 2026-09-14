@@ -1,8 +1,8 @@
-# pest-plugin-code-quality
+# Code Quality for Pest
 
 [![Tests](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml/badge.svg)](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml)
 
-A third-party [Pest](https://pestphp.com) plugin, by Ian Rodrigues, that adds method-level maintainability limits — cyclomatic complexity, body line count, and parameter count — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
+A third-party [Pest](https://pestphp.com) plugin, that adds method-level maintainability limits — cyclomatic complexity, body line count, and parameter count — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
 
 ## Requirements
 
