@@ -54,8 +54,8 @@
     "scripts": {
         "test": "pest",
         "test:parallel": "pest --parallel",
-        "lint": "pint src tests",
-        "lint:check": "pint --test src tests",
+        "lint": "pint",
+        "lint:check": "pint --test",
         "analyse": "phpstan analyse --memory-limit=1G",
         "check": [
             "@lint:check",
