@@ -2,3 +2,5 @@
 /composer.lock
 /.phpunit.cache/
 .DS_Store
+/.local/
+/.claude/
