@@ -14,9 +14,10 @@ A Pest 5 plugin that adds method-level maintainability limits (complexity, body 
 
 ## Running things
 
-- Package (once scaffolded): `composer check` runs pint, phpstan and pest.
+- `composer install` (also enables the git hooks), then `composer check` runs Pint, PHPStan (level max) and Pest.
+- Individual steps: `composer lint` (fix), `composer lint:check`, `composer analyse`, `composer test`, `composer test:parallel`.
 
 ## Guardrails that run without you
 
-- Git hooks live in `.githooks/` and are enabled with `git config core.hooksPath .githooks` (run once per clone; `composer install` will do it once the package is scaffolded). `commit-msg` rejects non-conventional subjects and any reference to task numbers or files; `pre-commit` lints staged PHP with Pint.
+- Git hooks live in `.githooks/` and are enabled with `git config core.hooksPath .githooks` (`composer install` does this for you). `commit-msg` rejects non-conventional subjects and any reference to task numbers or files; `pre-commit` lints staged PHP with Pint.
 - `composer check` (Pint, PHPStan level max, Pest) must pass before a commit is considered done. CI runs the same command on every push.
