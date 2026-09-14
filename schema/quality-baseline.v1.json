@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ianrodrigues/pest-plugin-code-quality/schema/quality-baseline.v1.json",
+  "title": "pest-plugin-code-quality baseline",
+  "description": "Written by --quality-baseline-generate and --quality-baseline-tighten, read on every run a baseline is configured for.",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "pluginVersion", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pluginVersion": {
+      "type": "string"
+    },
+    "entries": {
+      "description": "One accepted excess per symbol, sorted by policy then symbol. Only values above the configured limit are stored.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["policy", "symbol", "metric", "limit", "accepted", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string",
+          "description": "The policy's stable identity: its test description, or its target list, plus the metric."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Fully qualified Class::method."
+        },
+        "metric": { "$ref": "#/$defs/metric" },
+        "limit": {
+          "description": "The limit configured when the entry was written. An entry whose policy now configures a different limit is stale.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": {
+          "description": "The measured value accepted for this symbol. Always greater than limit.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "path": {
+          "description": "Diagnostic only; never part of any identity.",
+          "type": "string"
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

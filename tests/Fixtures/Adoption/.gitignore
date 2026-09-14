@@ -1,0 +1,6 @@
+/vendor/
+/composer.lock
+/app/
+/tests/
+/quality-baseline*.json
+/quality-baseline*.json.*
