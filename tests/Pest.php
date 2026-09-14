@@ -2,17 +2,47 @@
 
 declare(strict_types=1);
 
+use Pest\Arch\SingleArchExpectation;
+use PHPUnit\Framework\ExpectationFailedException;
+use Rdgs\PestCodeQuality\Exceptions\QualityExpectationFailed;
 use Rdgs\PestCodeQuality\Tests\TestCase;
 
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| No product behaviour exists yet, so this bootstrap only binds the shared
-| PHPUnit test case for Feature tests. Nothing else is configured here
-| until later tasks need it.
-|
-*/
-
 pest()->extend(TestCase::class)->in('Feature');
+
+/**
+ * The root namespace of the fixture application.
+ */
+const FIXTURE_APP = 'Rdgs\PestCodeQuality\Tests\Fixtures\App';
+
+/**
+ * Architecture expectations verify lazily, on the first proxied call or on
+ * destruction. Asking for verification is the only trigger that does not
+ * also run a second, unrelated expectation.
+ *
+ * @param Closure(): mixed $chain
+ * @return Closure(): void
+ */
+function policy(Closure $chain): Closure
+{
+    return function () use ($chain): void {
+        $expectation = $chain();
+
+        if ($expectation instanceof SingleArchExpectation) {
+            $expectation->ensureLazyExpectationIsVerified();
+        }
+    };
+}
+
+/**
+ * @param Closure(): mixed $chain
+ */
+function policy_failure(Closure $chain): string
+{
+    try {
+        policy($chain)();
+    } catch (QualityExpectationFailed $failure) {
+        return $failure->getMessage();
+    }
+
+    throw new ExpectationFailedException('Expected the expectation to fail, but it passed.');
+}
