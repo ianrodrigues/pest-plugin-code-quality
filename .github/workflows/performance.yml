@@ -1,0 +1,42 @@
+name: Performance
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: composer:v2
+          ini-values: zend.assertions=1
+
+      - name: Install GNU time
+        run: sudo apt-get update && sudo apt-get install -y time
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Run performance benchmark
+        env:
+          XDEBUG_MODE: off
+        run: composer perf -- --json=perf-result.json > perf-table.md
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: perf-result.json
+
+      - name: Write job summary
+        run: cat perf-table.md >> "$GITHUB_STEP_SUMMARY"
