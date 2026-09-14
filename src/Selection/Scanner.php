@@ -1,0 +1,327 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Rdgs\PestCodeQuality\Selection;
+
+use Pest\Arch\Objects\FunctionDescription;
+use Pest\Arch\Repositories\ObjectsRepository;
+use PhpParser\Error as ParserError;
+use PhpParser\Node;
+use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\Enum_;
+use PhpParser\Node\Stmt\Interface_;
+use PhpParser\Node\Stmt\Trait_;
+use PhpParser\NodeFinder;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\Parser;
+use PhpParser\ParserFactory;
+use PHPUnit\Architecture\Elements\ObjectDescription;
+use Rdgs\PestCodeQuality\Analysis\AstMeasurer;
+use Rdgs\PestCodeQuality\Analysis\FileMeasurements;
+use Rdgs\PestCodeQuality\Analysis\MeasurementCache;
+use Rdgs\PestCodeQuality\Policies\Policy;
+use Rdgs\PestCodeQuality\Selection\Support\NamespaceDirectories;
+use Rdgs\PestCodeQuality\Selection\Support\ResolvedDirectory;
+use Rdgs\PestCodeQuality\Support\ProjectPath;
+use Symfony\Component\Finder\Finder;
+
+/**
+ * Measures how completely one raw target was reached: files found under
+ * its resolved PSR-4 directories, objects Pest produced, objects with an
+ * AST, and the methods a policy can actually measure — versus guessing,
+ * this walks the same directories Pest's own `ObjectsRepository` does.
+ *
+ * File discovery and object production are read from the target's
+ * namespace unfiltered by `classes()`/`ignoring()`, since those are
+ * deliberate choices, not gaps in what Pest could see. Eligibility, which
+ * drives `EmptySelection`, is read from the filtered objects a policy
+ * actually measures.
+ */
+final class Scanner
+{
+    private readonly Parser $parser;
+
+    public function __construct(
+        private readonly AstMeasurer $measurer = new AstMeasurer(),
+        private readonly MeasurementCache $cache = new MeasurementCache(),
+    ) {
+        $this->parser = (new ParserFactory())->createForNewestSupportedVersion();
+    }
+
+    /**
+     * @param list<ObjectDescription> $filteredObjects
+     */
+    public function scan(string $target, array $filteredObjects, Policy $policy): TargetCoverage
+    {
+        $directories = NamespaceDirectories::resolve($target);
+
+        if ($directories !== [] && array_all($directories, static fn (ResolvedDirectory $directory): bool => $directory->isVendor())) {
+            throw VendorTarget::for($target, $directories);
+        }
+
+        $discovered = $this->discover($target);
+        $files = $this->filesUnder($directories);
+
+        $withAst = [];
+
+        foreach ($discovered as $object) {
+            if (! isset($object->stmts) || $object->stmts === []) {
+                continue;
+            }
+
+            $withAst[ProjectPath::canonical($object->path)] = true;
+        }
+
+        $skipped = [];
+
+        foreach ($files as $canonical => $original) {
+            if (isset($withAst[$canonical])) {
+                continue;
+            }
+
+            $skipped[] = new SkippedFile(ProjectPath::relative($canonical), $this->reasonFor($original, $directories));
+        }
+
+        return new TargetCoverage(
+            $target,
+            array_map(static fn (ResolvedDirectory $directory): string => ProjectPath::relative($directory->path), $directories),
+            count($files),
+            count($discovered),
+            count($withAst),
+            $this->eligibleMethods($filteredObjects, $policy),
+            $skipped,
+        );
+    }
+
+    /**
+     * @return list<ObjectDescription>
+     */
+    private function discover(string $target): array
+    {
+        $objects = [];
+
+        foreach (ObjectsRepository::getInstance()->allByNamespace($target) as $item) {
+            // `FunctionDescription` also extends `ObjectDescription`, so it
+            // is excluded explicitly rather than matched by type.
+            if (! $item instanceof FunctionDescription) {
+                $objects[] = $item;
+            }
+        }
+
+        return $this->deduplicated($objects);
+    }
+
+    /**
+     * A composer PSR-4 root nested inside a broader one that also matches
+     * the target (as the fixture app's own test-only namespaces do) makes
+     * `ObjectsRepository` scan the same directory twice; each object is
+     * counted once, by name, the same way `Targets::resolve()` dedupes
+     * across several target strings.
+     *
+     * @param list<ObjectDescription> $objects
+     * @return list<ObjectDescription>
+     */
+    private function deduplicated(array $objects): array
+    {
+        $seen = [];
+
+        foreach ($objects as $object) {
+            $seen[$object->name] ??= $object;
+        }
+
+        return array_values($seen);
+    }
+
+    /**
+     * @param list<ObjectDescription> $filteredObjects
+     */
+    private function eligibleMethods(array $filteredObjects, Policy $policy): int
+    {
+        $count = 0;
+
+        foreach ($this->deduplicated($filteredObjects) as $object) {
+            if (! isset($object->stmts) || $object->stmts === []) {
+                continue;
+            }
+
+            $path = ProjectPath::canonical($object->path);
+            $contents = @file_get_contents($path);
+
+            if ($contents === false) {
+                continue;
+            }
+
+            /** @var list<Node\Stmt> $stmts */
+            $stmts = array_values($object->stmts);
+
+            $measurements = $this->cache->remember(
+                $path,
+                $contents,
+                fn (): FileMeasurements => $this->measurer->measureAst($path, $stmts),
+            );
+
+            foreach ($measurements as $method) {
+                if ($method->isAnonymous()) {
+                    continue;
+                }
+
+                if ($policy->valueFor($method) !== null) {
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * @param list<ResolvedDirectory> $directories
+     * @return array<string, string> canonical path => original path
+     */
+    private function filesUnder(array $directories): array
+    {
+        $files = [];
+
+        foreach ($directories as $directory) {
+            if ($directory->isFile) {
+                $files[ProjectPath::canonical($directory->path)] = $directory->path;
+
+                continue;
+            }
+
+            foreach (Finder::create()->files()->in($directory->path)->name('*.php') as $file) {
+                $files[ProjectPath::canonical($file->getPathname())] = $file->getPathname();
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * @param list<ResolvedDirectory> $directories
+     */
+    private function reasonFor(string $file, array $directories): SkipReason
+    {
+        $owner = $this->ownerOf($file, $directories);
+
+        if ($owner instanceof ResolvedDirectory && $owner->isVendor()) {
+            return SkipReason::Vendor;
+        }
+
+        $declared = $this->declaredNamespace($file);
+
+        if ($declared === null) {
+            return SkipReason::NoAst;
+        }
+
+        if (! $owner instanceof ResolvedDirectory || $declared !== $this->expectedNamespace($file, $owner)) {
+            return SkipReason::NamespaceMismatch;
+        }
+
+        return SkipReason::NotLoadable;
+    }
+
+    /**
+     * The most specific resolved directory a file was actually found
+     * under, matched by directory containment rather than string prefix so
+     * sibling namespaces sharing a prefix (`Billing` vs `BillingArchive`)
+     * never cross-attribute.
+     *
+     * @param list<ResolvedDirectory> $directories
+     */
+    private function ownerOf(string $file, array $directories): ?ResolvedDirectory
+    {
+        $canonicalFile = ProjectPath::canonical($file);
+        $best = null;
+        $bestLength = -1;
+
+        foreach ($directories as $directory) {
+            if ($directory->isFile) {
+                if (ProjectPath::canonical($directory->path) === $canonicalFile) {
+                    return $directory;
+                }
+
+                continue;
+            }
+
+            $dir = ProjectPath::canonical($directory->path);
+
+            if ($dir !== $canonicalFile && ! str_starts_with($canonicalFile, $dir.DIRECTORY_SEPARATOR)) {
+                continue;
+            }
+
+            if (strlen($dir) > $bestLength) {
+                $best = $directory;
+                $bestLength = strlen($dir);
+            }
+        }
+
+        return $best;
+    }
+
+    private function expectedNamespace(string $file, ResolvedDirectory $owner): string
+    {
+        if ($owner->isFile) {
+            return $owner->namespace;
+        }
+
+        $dir = ProjectPath::canonical($owner->path);
+        $fileDir = dirname(ProjectPath::canonical($file));
+
+        if ($fileDir === $dir) {
+            return $owner->namespace;
+        }
+
+        $relative = str_replace(DIRECTORY_SEPARATOR, '\\', substr($fileDir, strlen($dir) + 1));
+
+        return $owner->namespace.'\\'.$relative;
+    }
+
+    private function declaredNamespace(string $file): ?string
+    {
+        $contents = @file_get_contents($file);
+
+        if ($contents === false) {
+            return null;
+        }
+
+        try {
+            $ast = $this->parser->parse($contents);
+        } catch (ParserError) {
+            return null;
+        }
+
+        if ($ast === null) {
+            return null;
+        }
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor(new NameResolver());
+        $stmts = $traverser->traverse($ast);
+
+        $node = (new NodeFinder())->findFirst(
+            $stmts,
+            static fn (Node $node): bool => $node instanceof Class_
+                || $node instanceof Trait_
+                || $node instanceof Interface_
+                || $node instanceof Enum_,
+        );
+
+        if (! $node instanceof Class_ && ! $node instanceof Trait_ && ! $node instanceof Interface_ && ! $node instanceof Enum_) {
+            return null;
+        }
+
+        $name = $node->namespacedName;
+
+        if ($name === null) {
+            return null;
+        }
+
+        $segments = explode('\\', $name->toString());
+        array_pop($segments);
+
+        return implode('\\', $segments);
+    }
+}

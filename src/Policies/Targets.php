@@ -54,8 +54,8 @@ final readonly class Targets
         $objects = [];
         $seen = [];
 
-        foreach ($this->targets->value as $target) {
-            foreach ($this->factory->make($options, $target) as $object) {
+        foreach ($this->values() as $target) {
+            foreach ($this->resolveTarget($options, $target) as $object) {
                 if (isset($seen[$object->name])) {
                     continue;
                 }
@@ -66,5 +66,28 @@ final readonly class Targets
         }
 
         return $objects;
+    }
+
+    /**
+     * The raw target strings this instance was built from, before the
+     * architecture layer resolves each into objects.
+     *
+     * @return list<string>
+     */
+    public function values(): array
+    {
+        return array_values($this->targets->value);
+    }
+
+    /**
+     * Resolves one raw target string on its own, so completeness
+     * accounting can be built per target instead of across the flattened,
+     * deduplicated set `resolve()` returns.
+     *
+     * @return list<ObjectDescription>
+     */
+    public function resolveTarget(LayerOptions $options, string $target): array
+    {
+        return iterator_to_array($this->factory->make($options, $target), false);
     }
 }

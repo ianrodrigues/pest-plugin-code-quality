@@ -12,6 +12,13 @@ use Rdgs\PestCodeQuality\Analysis\AnalysisError;
 use Rdgs\PestCodeQuality\Analysis\AstMeasurer;
 use Rdgs\PestCodeQuality\Analysis\FileMeasurements;
 use Rdgs\PestCodeQuality\Analysis\MeasurementCache;
+use Rdgs\PestCodeQuality\Selection\Config;
+use Rdgs\PestCodeQuality\Selection\Coverage;
+use Rdgs\PestCodeQuality\Selection\EmptySelection;
+use Rdgs\PestCodeQuality\Selection\Scanner;
+use Rdgs\PestCodeQuality\Selection\SkippedFilesFound;
+use Rdgs\PestCodeQuality\Selection\TargetCoverage;
+use Rdgs\PestCodeQuality\Selection\WarningsCollector;
 use Rdgs\PestCodeQuality\Support\IgnoredLines;
 use Rdgs\PestCodeQuality\Support\ProjectPath;
 
@@ -23,10 +30,14 @@ final class PolicyRunner
 {
     private static ?self $instance = null;
 
+    private readonly Scanner $scanner;
+
     public function __construct(
         private readonly AstMeasurer $measurer = new AstMeasurer(),
         private readonly MeasurementCache $cache = new MeasurementCache(),
+        ?Scanner $scanner = null,
     ) {
+        $this->scanner = $scanner ?? new Scanner($this->measurer, $this->cache);
     }
 
     /**
@@ -42,58 +53,114 @@ final class PolicyRunner
     {
         AssertLocker::incrementAndLock();
 
+        try {
+            return $this->runLocked($policy, $targets, $options);
+        } finally {
+            AssertLocker::unlock();
+        }
+    }
+
+    private function runLocked(Policy $policy, Targets $targets, LayerOptions $options): PolicyResult
+    {
+        /** @var list<array{0: list<ObjectDescription>, 1: TargetCoverage}> $perTarget */
+        $perTarget = [];
+
+        foreach ($targets->values() as $target) {
+            $objects = $targets->resolveTarget($options, $target);
+            $coverage = $this->scanner->scan($target, $objects, $policy);
+
+            if ($coverage->isEmpty() && ! $policy->allowEmpty) {
+                throw EmptySelection::for($target, $coverage);
+            }
+
+            $perTarget[] = [$objects, $coverage];
+        }
+
+        $coverage = new Coverage(array_map(
+            static fn (array $entry): TargetCoverage => $entry[1],
+            $perTarget,
+        ));
+
+        $this->handleSkipped($coverage);
+
+        [$violations, $objectsSeen, $methodsMeasured] = $this->measure($policy, $perTarget);
+
+        return new PolicyResult($policy, $violations, $objectsSeen, $methodsMeasured, $coverage);
+    }
+
+    private function handleSkipped(Coverage $coverage): void
+    {
+        $skipped = $coverage->skippedFiles();
+
+        if ($skipped === []) {
+            return;
+        }
+
+        if (Config::isStrict()) {
+            throw SkippedFilesFound::for($skipped);
+        }
+
+        WarningsCollector::record($skipped);
+    }
+
+    /**
+     * @param list<array{0: list<ObjectDescription>, 1: TargetCoverage}> $perTarget
+     * @return array{0: list<Violation>, 1: int, 2: int}
+     */
+    private function measure(Policy $policy, array $perTarget): array
+    {
         $violations = [];
         $objectsSeen = 0;
         $methodsMeasured = 0;
         $measured = [];
 
-        foreach ($targets->resolve($options) as $object) {
-            $stmts = $this->statements($object);
+        foreach ($perTarget as [$objects]) {
+            foreach ($objects as $object) {
+                $stmts = $this->statements($object);
 
-            if ($stmts === null) {
-                continue;
-            }
-
-            $path = ProjectPath::canonical($object->path);
-
-            if (isset($measured[$path])) {
-                continue;
-            }
-
-            $measured[$path] = true;
-            $objectsSeen++;
-
-            foreach ($this->measure($path, $stmts) as $method) {
-                if ($method->isAnonymous()) {
+                if ($stmts === null) {
                     continue;
                 }
 
-                $value = $policy->valueFor($method);
+                $path = ProjectPath::canonical($object->path);
 
-                if ($value === null) {
+                if (isset($measured[$path])) {
                     continue;
                 }
 
-                $methodsMeasured++;
+                $measured[$path] = true;
+                $objectsSeen++;
 
-                if ($policy->allows($value) || IgnoredLines::has($path, $method->line)) {
-                    continue;
+                foreach ($this->measureFile($path, $stmts) as $method) {
+                    if ($method->isAnonymous()) {
+                        continue;
+                    }
+
+                    $value = $policy->valueFor($method);
+
+                    if ($value === null) {
+                        continue;
+                    }
+
+                    $methodsMeasured++;
+
+                    if ($policy->allows($value) || IgnoredLines::has($path, $method->line)) {
+                        continue;
+                    }
+
+                    $violations[] = new Violation(
+                        $method->symbol,
+                        ProjectPath::relative($path),
+                        $method->line,
+                        $policy->metric,
+                        $value,
+                        $policy->limit,
+                    );
                 }
-
-                $violations[] = new Violation(
-                    $method->symbol,
-                    ProjectPath::relative($path),
-                    $method->line,
-                    $policy->metric,
-                    $value,
-                    $policy->limit,
-                );
             }
         }
 
-        AssertLocker::unlock();
-
-        return new PolicyResult($policy, $violations, $objectsSeen, $methodsMeasured);
+        return [$violations, $objectsSeen, $methodsMeasured];
     }
 
     /**
@@ -117,7 +184,7 @@ final class PolicyRunner
     /**
      * @param list<Stmt> $stmts
      */
-    private function measure(string $path, array $stmts): FileMeasurements
+    private function measureFile(string $path, array $stmts): FileMeasurements
     {
         $contents = @file_get_contents($path);
 

@@ -15,22 +15,23 @@ final readonly class Policy
         public MetricId $metric,
         public int $limit,
         public string $description,
+        public bool $allowEmpty = false,
     ) {
     }
 
-    public static function complexity(int $limit): self
+    public static function complexity(int $limit, bool $allowEmpty = false): self
     {
-        return self::make(MetricId::ccn2(), $limit, 'Method complexity');
+        return self::make(MetricId::ccn2(), $limit, 'Method complexity', $allowEmpty);
     }
 
-    public static function lines(int $limit): self
+    public static function lines(int $limit, bool $allowEmpty = false): self
     {
-        return self::make(MetricId::lines(), $limit, 'Method lines');
+        return self::make(MetricId::lines(), $limit, 'Method lines', $allowEmpty);
     }
 
-    public static function parameters(int $limit): self
+    public static function parameters(int $limit, bool $allowEmpty = false): self
     {
-        return self::make(MetricId::params(), $limit, 'Method parameters');
+        return self::make(MetricId::params(), $limit, 'Method parameters', $allowEmpty);
     }
 
     /**
@@ -62,12 +63,12 @@ final readonly class Policy
         return "{$this->metric->name} v{$this->metric->version}";
     }
 
-    private static function make(MetricId $metric, int $limit, string $description): self
+    private static function make(MetricId $metric, int $limit, string $description, bool $allowEmpty): self
     {
         if ($limit < 0) {
             throw InvalidLimit::negative($description, $limit);
         }
 
-        return new self($metric, $limit, $description);
+        return new self($metric, $limit, $description, $allowEmpty);
     }
 }

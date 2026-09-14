@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rdgs\PestCodeQuality\Policies;
 
+use Rdgs\PestCodeQuality\Selection\Coverage;
+
 final readonly class PolicyResult
 {
     /**
@@ -18,6 +20,7 @@ final readonly class PolicyResult
         public array $violations,
         public int $objectsSeen,
         public int $methodsMeasured,
+        public ?Coverage $coverage = null,
     ) {
     }
 
