@@ -1,5 +1,6 @@
 # pest-plugin-quality
 
+[![Tests](https://github.com/ianrodrigues/pest-plugin-quality/actions/workflows/tests.yml/badge.svg)](https://github.com/ianrodrigues/pest-plugin-quality/actions/workflows/tests.yml)
 
 A [Pest](https://pestphp.com) plugin that adds method-level maintainability limits — cyclomatic complexity, body line count, and parameter count — to Pest's `arch()` chain, with baselines for gradual adoption on existing codebases.
 
