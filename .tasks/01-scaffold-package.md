@@ -1,6 +1,6 @@
 # 01 · Scaffold the package
 
-Status: todo
+Status: done
 Depends on: —
 
 ## Goal
