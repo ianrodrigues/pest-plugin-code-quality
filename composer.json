@@ -29,9 +29,9 @@
         "laravel/pint": "^1.32",
         "pestphp/pest": "^5.0",
         "pestphp/pest-plugin-phpstan": "^5.2.1",
-        "pestphp/pest-plugin-rector": "^5.0",
+        "pestphp/pest-plugin-rector": "^5.0.4",
         "phpstan/phpstan": "^2.2.14",
-        "rector/rector": "^2.6",
+        "rector/rector": "^2.6.7",
         "symfony/process": "^7.4 || ^8.0"
     },
     "autoload": {
