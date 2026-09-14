@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Lint staged PHP files with Pint when the package toolchain is installed.
+staged=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php' | grep -vE '^(docs/research/spike|tests/Fixtures)/' || true)
+[ -z "$staged" ] && exit 0
+if [ -x vendor/bin/pint ]; then
+  vendor/bin/pint --test $staged || { echo "pre-commit: run 'composer lint' and restage" >&2; exit 1; }
+fi
+if [ -x vendor/bin/php ] || command -v php >/dev/null 2>&1; then
+  for f in $staged; do php -l "$f" >/dev/null || exit 1; done
+fi
+exit 0
