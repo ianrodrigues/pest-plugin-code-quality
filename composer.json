@@ -1,0 +1,90 @@
+{
+    "name": "ianrodrigues/pest-plugin-code-quality",
+    "description": "Method-level maintainability limits (complexity, body lines, parameters) as Pest architecture expectations, with baselines for gradual adoption.",
+    "type": "library",
+    "keywords": [
+        "pest",
+        "pest-plugin",
+        "architecture",
+        "quality",
+        "complexity",
+        "static-analysis"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ian Rodrigues",
+            "email": "ian@rdgs.net"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "pestphp/pest-plugin": "^5.0",
+        "pestphp/pest-plugin-arch": "~5.0.0",
+        "nikic/php-parser": "^5.6",
+        "symfony/finder": "^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "justinrainbow/json-schema": "^6.12",
+        "laravel/pint": "^1.32",
+        "pestphp/pest": "^5.0",
+        "pestphp/pest-plugin-phpstan": "^5.2.1",
+        "pestphp/pest-plugin-rector": "^5.0",
+        "phpstan/phpstan": "^2.2.14",
+        "rector/rector": "^2.6",
+        "symfony/process": "^7.4 || ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "IanRodrigues\\CodeQuality\\": "src/"
+        },
+        "files": [
+            "src/Autoload.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "IanRodrigues\\CodeQuality\\Tests\\": "tests/",
+            "IanRodrigues\\CodeQuality\\Tests\\Fixtures\\App\\": "tests/Fixtures/App/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "perf": "php -d xdebug.mode=off tests/Performance/bench.php",
+        "test": "pest",
+        "test:parallel": "pest --parallel",
+        "lint": "pint",
+        "lint:check": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "rector": "rector process",
+        "rector:check": "rector process --dry-run",
+        "check": [
+            "@lint:check",
+            "@analyse",
+            "@rector:check",
+            "@test"
+        ],
+        "post-install-cmd": "@hooks",
+        "post-update-cmd": "@hooks",
+        "hooks": "git rev-parse --is-inside-work-tree > /dev/null 2>&1 && git config core.hooksPath .githooks || true"
+    },
+    "extra": {
+        "phpstan": {
+            "includes": [
+                "extension.neon"
+            ]
+        },
+        "pest": {
+            "plugins": [
+                "IanRodrigues\\CodeQuality\\Selection\\Plugins\\OutputPlugin"
+            ]
+        }
+    }
+}

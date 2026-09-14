@@ -1,0 +1,8 @@
+/vendor/
+/composer.lock
+/.phpunit.cache/
+/.pint.cache
+/.phpstan.cache/
+.DS_Store
+/tests/Fixtures/Project/vendor/
+/tests/Fixtures/Project/composer.lock
