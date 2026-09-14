@@ -8,6 +8,8 @@ use Pest\Arch\Contracts\ArchExpectation;
 use Pest\Arch\Options\LayerOptions;
 use Pest\Arch\SingleArchExpectation;
 use Pest\Expectation;
+use Rdgs\PestCodeQuality\Analysis\AnalysisError;
+use Rdgs\PestCodeQuality\Exceptions\QualityAnalysisError;
 use Rdgs\PestCodeQuality\Exceptions\QualityExpectationFailed;
 use Rdgs\PestCodeQuality\Exceptions\UnsupportedModifier;
 use Rdgs\PestCodeQuality\Policies\Policy;
@@ -31,7 +33,11 @@ final class PolicyExpectation
         return SingleArchExpectation::fromExpectation(
             $expectation,
             static function (LayerOptions $options) use ($targets, $policy): void {
-                $result = PolicyRunner::shared()->run($policy, $targets, $options);
+                try {
+                    $result = PolicyRunner::shared()->run($policy, $targets, $options);
+                } catch (AnalysisError $error) {
+                    throw QualityAnalysisError::fromAnalysisError($error);
+                }
 
                 if ($result->passed()) {
                     return;
