@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Windows is part of the matrix below so that path-normalisation and
+# symlink behaviour gets exercised on a case-insensitive, backslash
+# filesystem as soon as those tests exist.
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+        os: [ubuntu-latest, windows-latest]
+        dependencies: [lowest, highest]
+    name: PHP ${{ matrix.php }} - ${{ matrix.os }} - ${{ matrix.dependencies }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+          ini-values: zend.assertions=1
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      - name: Lint
+        run: composer lint:check --ansi
+
+      - name: Analyse
+        run: composer analyse --ansi
+
+      - name: Test
+        run: composer test --ansi
+
+      - name: Test (parallel)
+        run: composer test:parallel --ansi
