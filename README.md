@@ -147,6 +147,42 @@ public function __construct(
 - A trait method belongs to the trait, never to any class that uses it. An anonymous class's own methods are measured (their control flow never contributes to the enclosing method's `ccn2`) but are never an assertable target; the physical lines of an anonymous class declaration do count towards the `lines` of the method that declares it, since they sit inside that method's braces.
 - Inherited methods are never counted on the child class — only where they are declared.
 
+## Selection and completeness
+
+Pest's architecture layer resolves a namespace to PSR-4 directories, then reflects each file it finds; a file that fails to autoload, or whose class lives in a different namespace than its directory implies, is silently dropped. A policy can then "pass" having measured nothing. This package accounts for that instead of trusting it.
+
+Every policy run tracks, per target: PHP files found under the resolved directories, objects Pest produced, objects with an AST, and eligible methods a policy could measure. It is exposed on the arch expectation's result as `Rdgs\PestCodeQuality\Selection\Coverage`.
+
+### Empty selections error by default
+
+If a target selects zero eligible methods, the test errors with `Rdgs\PestCodeQuality\Selection\EmptySelection` — naming the target, the directories searched, how many PHP files were found and how many objects were loadable. This is deliberate: an empty selection almost always means a namespace typo or a directory nobody wired up, not a codebase with nothing to check.
+
+When an empty selection is genuinely expected, opt out per expectation:
+
+```php
+arch('a namespace that is allowed to be empty for now')
+    ->expect('App\Experimental')
+    ->classes()
+    ->toHaveMethodComplexityAtMost(10, allowEmpty: true);
+```
+
+### Skipped files warn, unless strict
+
+A file found under a target's directories that never became a measurable object is skipped, not silently dropped: the policy still runs, and the result carries the skipped file with a reason (`not loadable`, `namespace mismatch`, `vendor`, or `no ast`). By default these are warnings, printed once per process at the end of the run:
+
+```
+Quality: 3 files were found but not analysed (run with --quality-inspect for details)
+  app/Billing/Old.php (not loadable)
+  app/Billing/Refund.php (namespace mismatch)
+  ...
+```
+
+`Rdgs\PestCodeQuality\Selection\Config::strict(true)` turns skipped files into an error (`Rdgs\PestCodeQuality\Selection\SkippedFilesFound`) instead of a warning. It is a static, resettable switch — call `Config::reset()` to return to warning. There is no CLI flag for it yet.
+
+### Vendor targets
+
+A target that resolves entirely under `vendor/` errors with `Rdgs\PestCodeQuality\Selection\VendorTarget`: Pest's architecture layer never produces an AST for vendor code, so there is nothing to measure there, ever — `allowEmpty` does not apply.
+
 ## License
 
 MIT. See `LICENSE`.
