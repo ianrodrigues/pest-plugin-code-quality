@@ -10,17 +10,22 @@ final class ProjectPath
 {
     /**
      * Matches how the rest of Pest's architecture output reads: relative to
-     * the project root, with forward slashes on every platform.
+     * the project root, with forward slashes on every platform. Normalised
+     * unconditionally rather than through `DIRECTORY_SEPARATOR`, so a
+     * Windows-style path is read the same way on every host OS a test runs
+     * on. A path outside the root is returned normalised but otherwise
+     * unchanged, since it cannot be made root-relative.
      */
     public static function relative(string $path): string
     {
-        $root = TestSuite::getInstance()->rootPath;
+        $root = self::normalise(TestSuite::getInstance()->rootPath);
+        $path = self::normalise($path);
 
-        if ($root !== '' && str_starts_with($path, $root.DIRECTORY_SEPARATOR)) {
-            $path = substr($path, strlen($root) + 1);
+        if ($root !== '' && str_starts_with($path, $root.'/')) {
+            return substr($path, strlen($root) + 1);
         }
 
-        return str_replace(DIRECTORY_SEPARATOR, '/', $path);
+        return $path;
     }
 
     public static function canonical(string $path): string
@@ -28,5 +33,10 @@ final class ProjectPath
         $real = realpath($path);
 
         return $real === false ? $path : $real;
+    }
+
+    private static function normalise(string $path): string
+    {
+        return str_replace('\\', '/', $path);
     }
 }
