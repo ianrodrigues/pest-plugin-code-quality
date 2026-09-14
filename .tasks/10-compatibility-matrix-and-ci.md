@@ -1,6 +1,6 @@
 # 10 · Compatibility matrix and CI
 
-Status: todo
+Status: in progress
 Depends on: 04
 
 ## Goal
