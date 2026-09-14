@@ -1,7 +1,6 @@
 * text=auto eol=lf
 
 /tests export-ignore
-/docs export-ignore
 /.tasks export-ignore
 /.githooks export-ignore
 /.github export-ignore
