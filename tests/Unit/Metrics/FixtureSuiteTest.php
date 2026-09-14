@@ -22,7 +22,8 @@ declare(strict_types=1);
  *   have no stable, addressable `Class::method` symbol.
  */
 
-use Rdgs\PestCodeQuality\Analysis\Contracts\Measurer;
+use Rdgs\PestCodeQuality\Analysis\AnalysisError;
+use Rdgs\PestCodeQuality\Analysis\AstMeasurer;
 
 dataset('metric fixtures', function (): iterable {
     $root = __DIR__ . '/../../Fixtures/Metrics';
@@ -43,15 +44,16 @@ dataset('metric fixtures', function (): iterable {
 });
 
 it('matches the measurer contract against every pinned fixture', function (string $fixturePath, string $expectedPath): void {
-    $measurer = new class () implements Measurer {
-        public function measure(string $path): array
-        {
-            throw new RuntimeException('measurement engine not implemented yet');
-        }
-    };
+    $measurer = new AstMeasurer();
 
-    /** @var array<string, array{ccn2: int|null, lines: int|null, params: int}>|array{__error__: true} $expected */
+    /** @var array<string, array{int|null, int|null, int}>|array{__error__: true} $expected */
     $expected = require $expectedPath;
 
+    if ($expected === ['__error__' => true]) {
+        expect(fn () => $measurer->measure($fixturePath))->toThrow(AnalysisError::class);
+
+        return;
+    }
+
     expect($measurer->measure($fixturePath))->toBe($expected);
-})->with('metric fixtures')->skip('measurement engine not implemented yet');
+})->with('metric fixtures');
