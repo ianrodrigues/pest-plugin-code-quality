@@ -21,7 +21,7 @@ Given a php-parser AST for one file, produce measurements for every eligible met
 - `sebastian/complexity` cross-check passes with the documented deltas.
 - Measuring the same path twice with unchanged content parses once (asserted via a counting parser stub); changed content re-measures.
 - Symbols for trait methods, enum methods, static methods, constructors, magic methods and promoted-constructor params are all correct in a dedicated test.
-- Measuring the `docs/research/spike/src` tree and laravel/framework-sized input (a generated 50k-line fixture is fine) completes without errors; time is recorded in the PR description, not asserted.
+- Measuring a laravel/framework-sized input (a generated 50k-line fixture is fine) completes without errors; time is recorded in the PR description, not asserted.
 - phpstan level max passes for `src/Analysis`.
 
 ## Out of scope

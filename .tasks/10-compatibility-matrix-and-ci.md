@@ -5,7 +5,7 @@ Depends on: 04
 
 ## Goal
 
-Every declared support target is tested on every push, and the declared matrix matches what actually passes (PRD F6 compatibility).
+Every declared support target is tested on every push, and the declared matrix matches what actually passes.
 
 ## Matrix
 
@@ -17,7 +17,6 @@ Every declared support target is tested on every push, and the declared matrix m
 
 - `test`: matrix above, running `composer check`.
 - `static`: phpstan level max, pint `--test`.
-- `spike`: the research spike still passes (guards against upstream changes to the integration mechanism, alongside the task 04 canary).
 - `docs`: README samples executed (task 09 doc-test).
 - Dependabot or Renovate for Composer and Actions, weekly.
 

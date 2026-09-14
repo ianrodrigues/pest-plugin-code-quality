@@ -5,7 +5,7 @@ Depends on: 04
 
 ## Goal
 
-A failing policy reports every violating method in one run, deterministically, in a message a developer can act on without reading engine docs (PRD §4 "Understand the failure" and F4).
+A failing policy reports every violating method in one run, deterministically, in a message a developer can act on without reading engine docs.
 
 ## Behaviour
 

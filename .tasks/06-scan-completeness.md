@@ -5,7 +5,7 @@ Depends on: 04
 
 ## Goal
 
-A policy can never pass because nothing was analysed. The research showed Pest's reflection-based discovery silently skipping 73 of 231 files and returning zero objects for a namespace that maps to a directory holding other namespaces. Make every such case visible (PRD F1).
+A policy can never pass because nothing was analysed. The research showed Pest's reflection-based discovery silently skipping 73 of 231 files and returning zero objects for a namespace that maps to a directory holding other namespaces. Make every such case visible.
 
 ## Behaviour
 

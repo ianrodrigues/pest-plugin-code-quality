@@ -5,7 +5,19 @@ Depends on: 07
 
 ## Goal
 
-Adopt a policy on an existing codebase without a cleanup: accept current excess per method, fail on any increase, and lock in improvements only when explicitly tightened (PRD F5, every scenario row).
+Adopt a policy on an existing codebase without a cleanup: accept current excess per method, fail on any increase, and lock in improvements only when explicitly tightened (every row of the scenario table below).
+
+## Scenarios (configured maximum 10, accepted value 16)
+
+| Scenario | Expected result |
+|---|---|
+| Existing method remains 16 | Pass; accepted excess is visible in inspection. |
+| Existing method becomes 17 | Fail: increase of 1. |
+| Existing method becomes 14 | Pass; flag the entry as eligible for tightening. |
+| After explicit tightening to 14, method becomes 15 | Fail. |
+| New method measures 11 | Fail. |
+| Existing method becomes 9 | Pass; its entry can be removed. |
+| Method is renamed without explicit migration | Treat as new; do not transfer the allowance. |
 
 ## Format (`tests/quality-baseline.json` by default)
 
@@ -29,7 +41,7 @@ Adopt a policy on an existing codebase without a cleanup: accept current excess 
 
 ## Acceptance criteria
 
-- One fixture per row of the PRD F5 scenario table, each asserted end-to-end through Pest.
+- One fixture per row of the scenario table above, each asserted end-to-end through Pest.
 - Corrupt file, interrupted write (simulated), duplicate identity, moved test file, changed limit, changed metric version and `--filter` preservation each have a test.
 - Generate and tighten refuse to run when any policy errored.
 - Inspection (task 07) shows accepted values next to measured ones.

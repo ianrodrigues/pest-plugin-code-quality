@@ -12,8 +12,7 @@ A publishable Composer package that Pest 5 discovers as a plugin, with the quali
 - `composer.json`: name `ianrodrigues/pest-plugin-quality` (working name; confirm ownership before task 12), type `library`, PHP `^8.4`, `pestphp/pest ^5.0` as `require-dev`, `pestphp/pest-plugin ^5.0`, `pestphp/pest-plugin-arch ~5.0.0` (tight pin, see research risk R1), `nikic/php-parser ^5.6`. Register the plugin via `extra.pest.plugins` and `autoload.files` for `src/Autoload.php`.
 - PSR-4 namespace `Pest\Quality\` under `src/`, tests under `tests/` with `tests/Pest.php`, `tests/Unit`, `tests/Feature`, `tests/Fixtures`.
 - Dev tooling: `laravel/pint` (PSR-12 preset), `phpstan/phpstan` at level max with `pestphp/pest-plugin-phpstan` or a plain `phpstan.neon`, `rector/rector` optional. Composer scripts: `test`, `lint`, `analyse`, `check` (all three).
-- `README.md` with a one-paragraph description and "work in progress" note; `LICENSE` (MIT); `CHANGELOG.md` with an empty `Unreleased` section; `.gitignore`, `.editorconfig`, `.gitattributes` (export-ignore for tests, docs, spike, .tasks).
-- Move the current `spike/` to `docs/research/spike/` so the package root stays clean; keep it runnable.
+- `README.md` with a one-paragraph description and "work in progress" note; `LICENSE` (MIT); `CHANGELOG.md` with an empty `Unreleased` section; `.gitignore`, `.editorconfig`, `.gitattributes` (export-ignore for tests, .tasks, hooks, tooling config).
 
 ## Acceptance criteria
 

@@ -31,7 +31,7 @@ All inclusive (`AtMost(10)` passes 10). All registered from `src/Autoload.php` t
 
 ## Acceptance criteria
 
-- A feature test suite modelled on `docs/research/spike/tests/Architecture/ControllersTest.php` passes: one failing policy per metric, ignoring, composition in both orders, exact class, namespace boundary (`App\Billing` does not select `App\BillingArchive`), enum and trait targets.
+- A feature test suite against a small fixture application (controllers with one over-complex method, a generated subfolder, a parser namespace, sibling namespaces sharing a prefix) passes: one failing policy per metric, ignoring, composition in both orders, exact class, namespace boundary (`App\Billing` does not select `App\BillingArchive`), enum and trait targets.
 - Serial and `--parallel` runs produce identical outcomes.
 - A canary test asserts that `Pest\Expectation::__call` still returns the extension result for an `ArchExpectation` return type; if it fails, the test message says the integration mechanism changed upstream.
 - `->not` test asserts the friendly error, not `BadMethodCallException`.

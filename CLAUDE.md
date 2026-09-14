@@ -4,8 +4,6 @@ A Pest 5 plugin that adds method-level maintainability limits (complexity, body 
 
 ## Where things are
 
-- `PRD.md` — product requirements and the decisions already made (§10).
-- `docs/research/` — feasibility research, benchmark script, syntax fixture, and the runnable spike.
 - `.tasks/` — the ordered task list for v0.1.0. Work tasks in order; update the `Status` line as you go.
 
 ## Commits
@@ -16,7 +14,6 @@ A Pest 5 plugin that adds method-level maintainability limits (complexity, body 
 
 ## Running things
 
-- Spike: `cd docs/research/spike && composer install && vendor/bin/pest` (expects 4 intentional failures, 10 passes).
 - Package (once scaffolded): `composer check` runs pint, phpstan and pest.
 
 ## Guardrails that run without you
