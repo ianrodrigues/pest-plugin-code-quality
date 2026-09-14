@@ -15,9 +15,9 @@ declare(strict_types=1);
 namespace Pest {
 
     /**
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodComplexityAtMost(int $max)
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodLinesAtMost(int $max)
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodParametersAtMost(int $max)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodComplexityAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodParametersAtMost(int $max, bool $allowEmpty = false)
      */
     class Expectation
     {
@@ -27,9 +27,9 @@ namespace Pest {
 namespace Pest\Arch {
 
     /**
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodComplexityAtMost(int $max)
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodLinesAtMost(int $max)
-     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodParametersAtMost(int $max)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodComplexityAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodParametersAtMost(int $max, bool $allowEmpty = false)
      */
     class PendingArchExpectation
     {
@@ -39,9 +39,9 @@ namespace Pest\Arch {
 namespace Pest\Arch\Contracts {
 
     /**
-     * @method ArchExpectation toHaveMethodComplexityAtMost(int $max)
-     * @method ArchExpectation toHaveMethodLinesAtMost(int $max)
-     * @method ArchExpectation toHaveMethodParametersAtMost(int $max)
+     * @method ArchExpectation toHaveMethodComplexityAtMost(int $max, bool $allowEmpty = false)
+     * @method ArchExpectation toHaveMethodLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method ArchExpectation toHaveMethodParametersAtMost(int $max, bool $allowEmpty = false)
      */
     interface ArchExpectation
     {

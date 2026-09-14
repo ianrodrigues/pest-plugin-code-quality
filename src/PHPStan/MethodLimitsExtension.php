@@ -10,7 +10,6 @@ use Pest\Expectation;
 use PHPStan\Reflection\ClassReflection;
 use PHPStan\Reflection\MethodReflection;
 use PHPStan\Reflection\MethodsClassReflectionExtension;
-use PHPStan\Reflection\ReflectionProvider;
 
 /**
  * The expectations are registered at runtime through `expect()->extend()`,
@@ -31,15 +30,6 @@ final class MethodLimitsExtension implements MethodsClassReflectionExtension
         ArchExpectation::class,
     ];
 
-    /**
-     * A Pest expectation with the same `(int): ArchExpectation` shape.
-     */
-    private const string SIGNATURE_SOURCE = 'toHaveLineCountLessThan';
-
-    public function __construct(private readonly ReflectionProvider $reflectionProvider)
-    {
-    }
-
     public function hasMethod(ClassReflection $classReflection, string $methodName): bool
     {
         if (! in_array($methodName, self::METHODS, true)) {
@@ -57,10 +47,6 @@ final class MethodLimitsExtension implements MethodsClassReflectionExtension
 
     public function getMethod(ClassReflection $classReflection, string $methodName): MethodReflection
     {
-        $signature = $this->reflectionProvider
-            ->getClass(Expectation::class)
-            ->getNativeMethod(self::SIGNATURE_SOURCE);
-
-        return new MethodLimitReflection($classReflection, $methodName, $signature);
+        return new MethodLimitReflection($classReflection, $methodName);
     }
 }

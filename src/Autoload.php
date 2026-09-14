@@ -23,17 +23,17 @@ function version(): string
  * members of the `arch()` chain.
  */
 
-expect()->extend('toHaveMethodComplexityAtMost', function (int $max): ArchExpectation {
+expect()->extend('toHaveMethodComplexityAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
     /** @var Expectation<array<int, string>|string> $this */
-    return PolicyExpectation::make($this, Policy::complexity($max));
+    return PolicyExpectation::make($this, Policy::complexity($max, $allowEmpty));
 });
 
-expect()->extend('toHaveMethodLinesAtMost', function (int $max): ArchExpectation {
+expect()->extend('toHaveMethodLinesAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
     /** @var Expectation<array<int, string>|string> $this */
-    return PolicyExpectation::make($this, Policy::lines($max));
+    return PolicyExpectation::make($this, Policy::lines($max, $allowEmpty));
 });
 
-expect()->extend('toHaveMethodParametersAtMost', function (int $max): ArchExpectation {
+expect()->extend('toHaveMethodParametersAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
     /** @var Expectation<array<int, string>|string> $this */
-    return PolicyExpectation::make($this, Policy::parameters($max));
+    return PolicyExpectation::make($this, Policy::parameters($max, $allowEmpty));
 });
