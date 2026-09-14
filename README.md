@@ -63,6 +63,21 @@ Exceeded by: 7
 
 PHPStan picks the three expectations up from `extension.neon`, automatically with [phpstan/extension-installer](https://github.com/phpstan/extension-installer), or by adding it to `includes` by hand. Editors can be pointed at `stubs/expectations.stub.php`, which declares the same methods as `@method` annotations.
 
+### Failure output
+
+Every violation is printed as one block, sorted by path, then symbol, then metric, and separated from the next by a blank line:
+
+```
+App\Http\Controllers\CheckoutController::store
+app/Http/Controllers/CheckoutController.php:42
+
+Method complexity (ccn2 v1): 17
+Allowed: at most 10
+Exceeded by: 7
+```
+
+After the list, a summary line states how many methods exceed the limit (`1 method exceeds the limit`, `3 methods exceed the limit`). Past 20 violations the message prints only the first 20 and ends with `Showing 20 of 37. The full list is available in the JSON report.` instead of growing without bound.
+
 ## Metric definitions
 
 Every measurement is tagged with a `{metric, version}` identity (for example `ccn2@1`, exposed as `Rdgs\PestCodeQuality\Metrics\MetricId`). Changing a definition below bumps the version rather than silently reinterpreting existing baselines.
