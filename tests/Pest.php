@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use IanRodrigues\CodeQuality\Config;
 use IanRodrigues\CodeQuality\Exceptions\QualityExpectationFailed;
 use IanRodrigues\CodeQuality\Tests\TestCase;
 use Pest\Arch\SingleArchExpectation;
 use PHPUnit\Framework\ExpectationFailedException;
 
 pest()->extend(TestCase::class)->in('Feature');
+
+Config::baseline(__DIR__.'/quality-baseline.json');
 
 const FIXTURE_APP = 'IanRodrigues\CodeQuality\Tests\Fixtures\App';
 
