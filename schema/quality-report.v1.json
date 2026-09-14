@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ianrodrigues/pest-plugin-code-quality/schema/quality-report.v1.json",
+  "title": "pest-plugin-code-quality report",
+  "description": "Produced by --quality-inspect=path and --quality-json=path.",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "versions", "policies", "truncated"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "versions": {
+      "type": "object",
+      "required": ["php", "pest", "plugin"],
+      "additionalProperties": false,
+      "properties": {
+        "php": { "type": "string" },
+        "pest": { "type": "string" },
+        "plugin": { "type": "string" }
+      }
+    },
+    "policies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/policy" }
+    },
+    "truncated": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "policy": {
+      "type": "object",
+      "required": ["id", "location", "targets", "metric", "limit", "coverage", "violations", "errors"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The declaring test's name."
+        },
+        "location": { "$ref": "#/$defs/location" },
+        "targets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "metric": { "$ref": "#/$defs/metric" },
+        "limit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coverage": { "$ref": "#/$defs/coverage" },
+        "baseline": {
+          "description": "Present only when a baseline is configured for the run.",
+          "$ref": "#/$defs/baseline"
+        },
+        "measurements": {
+          "description": "Every method the metric applied to. Omitted from --quality-json's findings-only report.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/measurement" }
+        },
+        "violations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/violation" }
+        },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": ["path", "applied", "stale"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "applied": {
+          "description": "How many entries raised the ceiling of a symbol this policy measured.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "stale": {
+          "description": "Entries whose metric version or configured limit no longer matches the policy, and which were therefore ignored.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/baselineEntry" }
+        }
+      }
+    },
+    "baselineEntry": {
+      "type": "object",
+      "required": ["policy", "symbol", "metric", "limit", "accepted", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "type": "string" },
+        "symbol": { "type": "string" },
+        "metric": { "$ref": "#/$defs/metric" },
+        "limit": { "type": "integer", "minimum": 0 },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "path": { "type": "string" }
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["file", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["filesFound", "objects", "withAst", "methodsMeasured", "skipped"],
+      "additionalProperties": false,
+      "properties": {
+        "filesFound": { "type": "integer", "minimum": 0 },
+        "objects": { "type": "integer", "minimum": 0 },
+        "withAst": { "type": "integer", "minimum": 0 },
+        "methodsMeasured": { "type": "integer", "minimum": 0 },
+        "skipped": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/skippedFile" }
+        }
+      }
+    },
+    "skippedFile": {
+      "type": "object",
+      "required": ["path", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "reason": {
+          "type": "string",
+          "enum": ["not loadable", "namespace mismatch", "vendor", "no ast"]
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "required": ["symbol", "path", "line", "ccn2", "lines", "params"],
+      "additionalProperties": false,
+      "properties": {
+        "symbol": { "type": "string" },
+        "path": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "ccn2": { "type": ["integer", "null"], "minimum": 1 },
+        "lines": { "type": ["integer", "null"], "minimum": 0 },
+        "params": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "violation": {
+      "type": "object",
+      "required": ["symbol", "path", "line", "value", "limit"],
+      "additionalProperties": false,
+      "properties": {
+        "symbol": { "type": "string" },
+        "path": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "value": { "type": "integer" },
+        "limit": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
