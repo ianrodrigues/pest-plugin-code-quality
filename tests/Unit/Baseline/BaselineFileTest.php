@@ -54,6 +54,25 @@ it('reads back exactly what it wrote', function (): void {
     unlink($path);
 });
 
+it('round-trips a variableName entry, a metric added after the file shape was fixed', function (): void {
+    $path = baseline_temporary_path();
+
+    $baseline = Baseline::of([
+        new BaselineEntry('orders stay small :: variableName', 'App\Orders\Order::place', Metric::VariableName, 1, 20, 24, 'app/Orders/Order.php'),
+    ]);
+
+    BaselineFile::write($path, $baseline);
+
+    $document = json_decode((string) file_get_contents($path));
+    $validator = new Validator();
+    $validator->validate($document, baseline_schema());
+
+    expect($validator->isValid())->toBeTrue(json_encode($validator->getErrors()) ?: 'invalid')
+        ->and(BaselineFile::read($path)->entries)->toEqual($baseline->entries);
+
+    unlink($path);
+});
+
 it('sorts entries by policy then symbol, so two runs write the same bytes', function (): void {
     $entries = [
         new BaselineEntry('b :: ccn2', 'App\Z::z', Metric::Ccn2, 1, 10, 11, 'app/Z.php'),

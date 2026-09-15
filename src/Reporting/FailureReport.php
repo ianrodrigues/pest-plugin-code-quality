@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Reporting;
 
+use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
+use IanRodrigues\CodeQuality\Metrics\Metric;
 use IanRodrigues\CodeQuality\Policies\Policy;
 use IanRodrigues\CodeQuality\Policies\PolicyResult;
 use IanRodrigues\CodeQuality\Policies\Violation;
@@ -19,13 +21,38 @@ final class FailureReport
     public static function for(PolicyResult $result): string
     {
         $violations = $result->sortedViolations();
+        $identifiers = self::longestVariableIdentifiers($result);
 
         $blocks = implode("\n\n", array_map(
-            static fn (Violation $violation): string => self::block($result->policy, $violation),
+            static fn (Violation $violation): string => self::block($result->policy, $violation, $identifiers[$violation->symbol] ?? null),
             array_slice($violations, 0, self::TRUNCATION_LIMIT),
         ));
 
         return $blocks."\n\n".self::summary($result->policy, count($violations));
+    }
+
+    /**
+     * `variableName`'s failure names the longest identifier itself,
+     * alongside the length `$violation->value` already carries; every
+     * other metric's value is self-explanatory.
+     *
+     * @return array<string, string>
+     */
+    private static function longestVariableIdentifiers(PolicyResult $result): array
+    {
+        if ($result->policy->metric !== Metric::VariableName) {
+            return [];
+        }
+
+        $identifiers = [];
+
+        foreach ($result->measurements as $measurement) {
+            if ($measurement instanceof MethodMeasurements && $measurement->longestVariableIdentifier !== null) {
+                $identifiers[$measurement->symbol] = $measurement->longestVariableIdentifier;
+            }
+        }
+
+        return $identifiers;
     }
 
     private static function summary(Policy $policy, int $total): string
@@ -47,15 +74,20 @@ final class FailureReport
         );
     }
 
-    private static function block(Policy $policy, Violation $violation): string
+    private static function block(Policy $policy, Violation $violation, ?string $identifier): string
     {
         $lines = [
             $violation->symbol,
             "{$violation->path}:{$violation->line}",
             '',
             sprintf('%s (%s): %d', $policy->description, $policy->metricLabel(), $violation->value),
-            "Allowed: at most {$violation->limit}",
         ];
+
+        if ($identifier !== null) {
+            $lines[] = sprintf('Longest: $%s (%d)', $identifier, $violation->value);
+        }
+
+        $lines[] = "Allowed: at most {$violation->limit}";
 
         if ($violation->accepted !== null) {
             $lines[] = "Accepted: {$violation->accepted}";

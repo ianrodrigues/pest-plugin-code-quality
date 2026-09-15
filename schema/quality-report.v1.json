@@ -178,7 +178,17 @@
         "line": { "type": "integer", "minimum": 0 },
         "ccn2": { "type": ["integer", "null"], "minimum": 1 },
         "lines": { "type": ["integer", "null"], "minimum": 0 },
-        "params": { "type": "integer", "minimum": 0 }
+        "params": { "type": "integer", "minimum": 0 },
+        "methodName": {
+          "description": "Character count of the method's short name. Omitted by a report produced before this field existed.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "variableName": {
+          "description": "Character count of the longest variable identifier the method declares, 0 when it declares none. Omitted by a report produced before this field existed.",
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "classMeasurement": {
@@ -203,7 +213,12 @@
           "type": ["integer", "null"],
           "minimum": 0
         },
-        "classLines": { "type": "integer", "minimum": 0 }
+        "classLines": { "type": "integer", "minimum": 0 },
+        "className": {
+          "description": "Character count of the declaration's short name. Omitted by a report produced before this field existed.",
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "violation": {

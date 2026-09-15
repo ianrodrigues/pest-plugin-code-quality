@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
+use IanRodrigues\CodeQuality\Analysis\Support\SymbolLocation;
 use IanRodrigues\CodeQuality\Metrics\Metric;
 use IanRodrigues\CodeQuality\Policies\Policy;
 use IanRodrigues\CodeQuality\Policies\PolicyResult;
@@ -120,6 +122,38 @@ it('does not truncate exactly at the limit', function (): void {
         ->toContain('App\Many::method20')
         ->toEndWith('20 methods exceed the limit')
         ->not->toContain('Showing');
+});
+
+it('names the longest variable identifier on a variableName failure', function (): void {
+    $method = new MethodMeasurements(
+        new SymbolLocation('App\Foo::bar', 'app/Foo.php', 42, 45),
+        ccn2: 1,
+        lines: 3,
+        params: 2,
+        methodName: 3,
+        variableName: 28,
+        longestVariableIdentifier: 'someVeryLongVariableName',
+    );
+
+    $result = new PolicyResult(
+        Policy::variableNames(20),
+        [new Violation('App\Foo::bar', 'app/Foo.php', 42, Metric::VariableName, 28, 20)],
+        objectsSeen: 1,
+        methodsMeasured: 1,
+        measurements: [$method],
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Foo::bar',
+        'app/Foo.php:42',
+        '',
+        'Variable name length (variableName v1): 28',
+        'Longest: $someVeryLongVariableName (28)',
+        'Allowed: at most 20',
+        'Exceeded by: 8',
+        '',
+        '1 method exceeds the limit',
+    ]));
 });
 
 it('states the accepted value and the increase when a baseline raised the ceiling', function (): void {

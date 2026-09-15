@@ -50,6 +50,21 @@ $register = static function (): void {
         /** @var Expectation<array<int, string>|string> $this */
         return PolicyExpectation::make($this, Policy::classLines($max, $allowEmpty));
     });
+
+    expect()->extend('toHaveClassNamesAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
+        /** @var Expectation<array<int, string>|string> $this */
+        return PolicyExpectation::make($this, Policy::classNames($max, $allowEmpty));
+    });
+
+    expect()->extend('toHaveMethodNamesAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
+        /** @var Expectation<array<int, string>|string> $this */
+        return PolicyExpectation::make($this, Policy::methodNames($max, $allowEmpty));
+    });
+
+    expect()->extend('toHaveVariableNamesAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
+        /** @var Expectation<array<int, string>|string> $this */
+        return PolicyExpectation::make($this, Policy::variableNames($max, $allowEmpty));
+    });
 };
 
 if (function_exists('expect')) {
