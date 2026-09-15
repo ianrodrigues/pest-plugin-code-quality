@@ -12,10 +12,9 @@ use Pest\Plugin;
 
 const VERSION = '0.1.0';
 
-// Composer gives no ordering guarantee between packages' `files` entries, so
-// `expect()` may not exist yet; Pest runs `Plugin::$callables` after boot.
-// Registering right away when it does exist keeps static analysis aware of the
-// methods, since PHPStan never boots Pest.
+// Composer's `files` entries load in no guaranteed order, so `expect()`
+// may not exist yet; Pest runs `Plugin::$callables` after boot instead.
+// Registering here too keeps PHPStan, which never boots Pest, aware of the methods.
 $register = static function (): void {
     expect()->extend('toHaveMethodComplexityAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
         /** @var Expectation<array<int, string>|string> $this */

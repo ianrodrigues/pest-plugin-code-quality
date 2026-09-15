@@ -5,14 +5,9 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Metrics;
 
 /**
- * A metric this package measures, either per method (`ccn2`, `lines`,
- * `params`) or per class-like declaration (`methods`, `properties`,
- * `inheritance`, `classLines`).
- *
- * `version()` is the metric's definition version, stamped on every
- * measurement and stored in every baseline entry. Widening or narrowing
- * what a metric counts bumps the `match` in `version()` rather than
- * silently reinterpreting existing baselines.
+ * A metric this package measures, per method (`ccn2`, `lines`, `params`)
+ * or class-like declaration (`methods`, `properties`, `inheritance`,
+ * `classLines`); `version()` bumps to mark baselines stale instead of reinterpreting them silently.
  */
 enum Metric: string
 {

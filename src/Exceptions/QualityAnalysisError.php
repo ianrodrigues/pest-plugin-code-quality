@@ -10,8 +10,7 @@ use RuntimeException;
 /**
  * A file Pest couldn't measure is an engine problem, not a policy
  * violation, so this stays a plain `RuntimeException` rather than an
- * `AssertionFailedError`: the owning test ends as an error, never a
- * failure.
+ * `AssertionFailedError`: the test ends as an error, never a failure.
  */
 final class QualityAnalysisError extends RuntimeException
 {
