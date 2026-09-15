@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Analysis;
 
 /**
- * `inheritance` is `null` for an interface, a trait and an enum, none of
- * which extend a class; every other value applies to every class-like
- * declaration. `accessors` is not a metric of its own: it is the share of
- * `methods` that `toHaveMethodsAtMost(ignoringAccessors: true)` drops.
+ * `inheritance` is `null` for an interface, a trait, or an enum, since
+ * none of those extend a class. `accessors` is the share of `methods`
+ * that `ignoringAccessors: true` drops, not a metric of its own.
  */
 final readonly class ClassMeasurements
 {

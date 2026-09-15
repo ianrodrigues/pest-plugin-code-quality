@@ -36,12 +36,9 @@ use PhpParser\Node\Stmt\While_;
 use PhpParser\NodeVisitorAbstract;
 
 /**
- * Closures and arrow functions do not get their own `ccn2` context: any
- * counted construct inside one is attributed to the innermost enclosing
- * method. Anonymous classes are entered without starting a new `ccn2`
- * context of their own (so their declaration does not add to the enclosing
- * method's `ccn2`), but each of their methods pushes its own context, same
- * as any other method.
+ * A construct inside a closure, arrow function, or anonymous class body
+ * counts toward the innermost enclosing method's `ccn2`; none of these
+ * start a `ccn2` context of their own.
  */
 final class MetricsVisitor extends NodeVisitorAbstract
 {

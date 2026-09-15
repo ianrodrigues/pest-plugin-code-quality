@@ -12,9 +12,8 @@ interface Measurer
 {
     /**
      * Maps each `Fully\Qualified\Class::method` symbol to its
-     * `[ccn2, lines, params]` values. A `null` value means the metric does
-     * not apply to that symbol (for example, `ccn2` and `lines` on an
-     * abstract or interface method); `params` is always an `int`.
+     * `[ccn2, lines, params]` values; `null` means the metric does not
+     * apply, as `ccn2`/`lines` do not on an abstract or interface method.
      *
      * @return array<string, array{int|null, int|null, int}>
      */

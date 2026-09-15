@@ -11,13 +11,9 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 
 /**
- * One class-like declaration `MetricsVisitor` walked, kept with its node so
- * the counts are derived once the whole file is known: a parent declared
- * further down the same file is still a parent.
- *
- * Every count is of what the declaration itself holds. A method or a
- * property reached through `extends` or `use` belongs to the class or the
- * trait that declares it, never to this one.
+ * Kept with its node so counts are derived once the whole file is
+ * known: a parent declared further down is still a parent. Every count
+ * is of what the declaration itself holds, not members reached via `extends`/`use`.
  */
 final readonly class ClassDeclaration
 {
