@@ -52,6 +52,11 @@ final readonly class Policy
         return self::make(Metric::Properties, $limit, $allowEmpty);
     }
 
+    public static function inheritance(int $limit, bool $allowEmpty = false): self
+    {
+        return self::make(Metric::Inheritance, $limit, $allowEmpty);
+    }
+
     /**
      * The symbols this policy compares against its limit: the methods of
      * the file for a method-scoped metric, its class-like declarations for
