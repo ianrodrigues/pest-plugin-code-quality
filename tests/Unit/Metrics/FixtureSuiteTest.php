@@ -8,6 +8,11 @@ declare(strict_types=1);
  * it silently. Anonymous class methods and property hooks are measured
  * but never appear in `expected.php`, having no stable `Class::method`
  * symbol.
+ *
+ * A key holding `::` is a method row, `[ccn2, lines, params]`. Every other
+ * key is a class row, `['methods' => …, 'accessors' => …, 'properties' =>
+ * …, 'inheritance' => …, 'classLines' => …]`, and a topic that declares
+ * one declares one for every class-like it holds.
  */
 
 use IanRodrigues\CodeQuality\Analysis\AnalysisError;
@@ -31,10 +36,23 @@ dataset('metric fixtures', function (): iterable {
     }
 });
 
+/**
+ * @param array<string, mixed> $expected
+ * @return array<string, mixed>
+ */
+function fixture_rows_of(array $expected, bool $methods): array
+{
+    return array_filter(
+        $expected,
+        static fn (string $symbol): bool => str_contains($symbol, '::') === $methods,
+        ARRAY_FILTER_USE_KEY,
+    );
+}
+
 it('matches the measurer contract against every pinned fixture', function (string $fixturePath, string $expectedPath): void {
     $measurer = new AstMeasurer();
 
-    /** @var array<string, array{int|null, int|null, int}>|array{__error__: true} $expected */
+    /** @var array<string, mixed> $expected */
     $expected = require $expectedPath;
 
     if ($expected === ['__error__' => true]) {
@@ -43,5 +61,11 @@ it('matches the measurer contract against every pinned fixture', function (strin
         return;
     }
 
-    expect($measurer->measure($fixturePath))->toBe($expected);
+    expect($measurer->measure($fixturePath))->toBe(fixture_rows_of($expected, true));
+
+    $classes = fixture_rows_of($expected, false);
+
+    if ($classes !== []) {
+        expect($measurer->measureClasses($fixturePath))->toBe($classes);
+    }
 })->with('metric fixtures');
