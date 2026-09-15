@@ -22,6 +22,10 @@ it('reports the offending class, its declaration and the excess', function (): v
         'Class properties (properties v1): 3',
         'Allowed: at most 2',
         'Exceeded by: 1',
+        'Counted:',
+        '  name (line 9)',
+        '  size (line 11)',
+        '  id (line 13)',
         '',
         '1 class exceeds the limit',
     ]));
