@@ -10,8 +10,8 @@ final class ProjectPath
 {
     /**
      * Relative to the project root with forward slashes, matching Pest's
-     * own architecture output; normalised unconditionally so it reads the
-     * same on every host OS. A path outside the root is returned unchanged.
+     * own architecture output. A path outside the root keeps this
+     * normalisation but is not relativised.
      */
     public static function relative(string $path): string
     {
