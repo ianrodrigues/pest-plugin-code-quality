@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- A file that declares no class, interface, trait or enum (a functions file, a config file returning an array) is no longer reported under "files were found but not analysed"; it counts in `filesFound` and in the new `withoutClasses` coverage count instead.
 
 ## [0.1.0] - 2026-09-14
 
