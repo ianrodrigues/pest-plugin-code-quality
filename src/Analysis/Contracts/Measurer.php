@@ -21,8 +21,8 @@ interface Measurer
 
     /**
      * Maps each `Fully\Qualified\Class` symbol to its class-level values.
-     * `inheritance` is `null` for a declaration that extends no class: an
-     * interface, a trait or an enum.
+     * `inheritance` is `null` only for an interface, a trait or an enum; a
+     * class with no parent measures `0`, not `null`.
      *
      * @return array<string, array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int}>
      */
