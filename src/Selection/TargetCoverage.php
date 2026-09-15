@@ -6,7 +6,7 @@ namespace IanRodrigues\CodeQuality\Selection;
 
 /**
  * How much of one raw target string Pest's discovery actually reached:
- * every stage of the funnel from "files on disk" to "methods a policy can
+ * every stage of the funnel from "files on disk" to "symbols a policy can
  * measure", plus the files that fell out of it and why.
  */
 final readonly class TargetCoverage
@@ -21,7 +21,7 @@ final readonly class TargetCoverage
         public int $filesFound,
         public int $objectsProduced,
         public int $objectsWithAst,
-        public int $eligibleMethods,
+        public int $eligibleSymbols,
         public array $skipped,
         public int $withoutClasses = 0,
     ) {

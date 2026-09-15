@@ -6,12 +6,14 @@ namespace IanRodrigues\CodeQuality\Policies;
 
 use IanRodrigues\CodeQuality\Analysis\AnalysisError;
 use IanRodrigues\CodeQuality\Analysis\AstMeasurer;
+use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
 use IanRodrigues\CodeQuality\Analysis\FileMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MeasurementCache;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Baseline\BaselineRepository;
 use IanRodrigues\CodeQuality\Baseline\PolicyBaseline;
 use IanRodrigues\CodeQuality\Config;
+use IanRodrigues\CodeQuality\Metrics\Scope;
 use IanRodrigues\CodeQuality\Selection\Coverage;
 use IanRodrigues\CodeQuality\Selection\EmptySelection;
 use IanRodrigues\CodeQuality\Selection\Scanner;
@@ -88,13 +90,17 @@ final class PolicyRunner
 
         $this->handleSkipped($coverage);
 
-        [$violations, $objectsSeen, $methodsMeasured, $measurements] = $this->measure($policy, $perTarget, $baseline);
+        [$violations, $objectsSeen, $measurements] = $this->measure($policy, $perTarget, $baseline);
+
+        $measured = count($measurements);
+        $isMethodScoped = $policy->metric->scope() === Scope::Method;
 
         return new PolicyResult(
             $policy,
             $violations,
             $objectsSeen,
-            $methodsMeasured,
+            $isMethodScoped ? $measured : 0,
+            $isMethodScoped ? 0 : $measured,
             $coverage,
             $measurements,
             $identity,
@@ -119,13 +125,12 @@ final class PolicyRunner
 
     /**
      * @param list<array{0: list<ObjectDescription>, 1: TargetCoverage}> $perTarget
-     * @return array{0: list<Violation>, 1: int, 2: int, 3: list<MethodMeasurements>}
+     * @return array{0: list<Violation>, 1: int, 2: list<ClassMeasurements|MethodMeasurements>}
      */
     private function measure(Policy $policy, array $perTarget, ?PolicyBaseline $baseline): array
     {
         $violations = [];
         $objectsSeen = 0;
-        $methodsMeasured = 0;
         $measurements = [];
         $measured = [];
 
@@ -146,40 +151,56 @@ final class PolicyRunner
                 $measured[$path] = true;
                 $objectsSeen++;
 
-                foreach ($this->measureFile($path, $stmts) as $method) {
-                    if ($method->isAnonymous()) {
+                foreach ($policy->symbolsIn($this->measureFile($path, $stmts)) as $symbol) {
+                    if ($symbol->isAnonymous()) {
                         continue;
                     }
 
-                    $value = $policy->valueFor($method);
+                    $value = $policy->valueFor($symbol);
 
                     if ($value === null) {
                         continue;
                     }
 
-                    $methodsMeasured++;
-                    $measurements[] = $method;
+                    $measurements[] = $symbol;
+                    $violation = $this->violationFor($policy, $symbol, $value, $baseline);
 
-                    $accepted = $baseline?->acceptedFor($method->symbol);
-
-                    if ($policy->allows($value, $accepted) || IgnoredLines::has($path, $method->line)) {
-                        continue;
+                    if ($violation instanceof Violation) {
+                        $violations[] = $violation;
                     }
-
-                    $violations[] = new Violation(
-                        $method->symbol,
-                        ProjectPath::relative($path),
-                        $method->line,
-                        $policy->metric,
-                        $value,
-                        $policy->limit,
-                        $accepted,
-                    );
                 }
             }
         }
 
-        return [$violations, $objectsSeen, $methodsMeasured, $measurements];
+        return [$violations, $objectsSeen, $measurements];
+    }
+
+    /**
+     * Null when the value is within the limit, within the ceiling a
+     * baseline raised, or on a line the architecture plugin's own inline
+     * escape hatches exclude.
+     */
+    private function violationFor(
+        Policy $policy,
+        ClassMeasurements|MethodMeasurements $symbol,
+        int $value,
+        ?PolicyBaseline $baseline,
+    ): ?Violation {
+        $accepted = $baseline?->acceptedFor($symbol->symbol);
+
+        if ($policy->allows($value, $accepted) || IgnoredLines::has($symbol->path, $symbol->line)) {
+            return null;
+        }
+
+        return new Violation(
+            $symbol->symbol,
+            ProjectPath::relative($symbol->path),
+            $symbol->line,
+            $policy->metric,
+            $value,
+            $policy->limit,
+            $accepted,
+        );
     }
 
     /**

@@ -13,6 +13,7 @@ use IanRodrigues\CodeQuality\Reporting\RunRecorder;
  * untouched, so a filtered run never drops allowances it never looked at.
  *
  * @phpstan-import-type PolicyEntry from RunRecorder
+ * @phpstan-import-type MeasurementRow from RunRecorder
  */
 final class BaselineUpdater
 {
@@ -71,18 +72,17 @@ final class BaselineUpdater
     }
 
     /**
-     * Null when the metric does not apply to the measured symbol.
+     * A measurement row is keyed by the metric's own value, so a row
+     * written by a policy of the other scope, and a metric that did not
+     * apply to the symbol, both read as null.
      *
-     * @param array{ccn2: int|null, lines: int|null, params: int} $measurement
+     * @param MeasurementRow $measurement
      */
     private static function valueOf(Metric $metric, array $measurement): ?int
     {
-        return match ($metric) {
-            Metric::Ccn2 => $measurement['ccn2'],
-            Metric::Lines => $measurement['lines'],
-            Metric::Params => $measurement['params'],
-            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
-        };
+        $value = $measurement[$metric->value] ?? null;
+
+        return is_int($value) ? $value : null;
     }
 
     /**

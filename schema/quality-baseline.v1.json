@@ -35,7 +35,7 @@
         },
         "symbol": {
           "type": "string",
-          "description": "Fully qualified Class::method."
+          "description": "Fully qualified Class::method for a method-scoped metric, and fully qualified Class for a class-scoped one."
         },
         "metric": { "$ref": "#/$defs/metric" },
         "limit": {

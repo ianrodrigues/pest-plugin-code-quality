@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Policies;
 
+use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
+use IanRodrigues\CodeQuality\Analysis\FileMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Exceptions\InvalidLimit;
 use IanRodrigues\CodeQuality\Metrics\Metric;
+use IanRodrigues\CodeQuality\Metrics\Scope;
 
 final readonly class Policy
 {
@@ -18,6 +21,7 @@ final readonly class Policy
         public Metric $metric,
         public int $limit,
         public bool $allowEmpty = false,
+        public bool $ignoringAccessors = false,
     ) {
         $this->description = $metric->label();
         $this->expectation = $metric->expectation();
@@ -39,17 +43,31 @@ final readonly class Policy
     }
 
     /**
-     * Null when the metric does not apply to the method, as `ccn2` and
-     * `lines` do not to abstract and interface methods.
+     * The symbols this policy compares against its limit: the methods of
+     * the file for a method-scoped metric, its class-like declarations for
+     * a class-scoped one.
+     *
+     * @return list<ClassMeasurements|MethodMeasurements>
      */
-    public function valueFor(MethodMeasurements $method): ?int
+    public function symbolsIn(FileMeasurements $file): array
     {
-        return match ($this->metric) {
-            Metric::Ccn2 => $method->ccn2,
-            Metric::Lines => $method->lines,
-            Metric::Params => $method->params,
-            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
+        return match ($this->metric->scope()) {
+            Scope::Method => $file->methods(),
+            Scope::ClassLike => $file->classes(),
         };
+    }
+
+    /**
+     * Null when the metric does not apply to the symbol, as `ccn2` and
+     * `lines` do not to abstract and interface methods, `inheritance` does
+     * not to an interface, and every method-scoped metric does not to a
+     * class.
+     */
+    public function valueFor(ClassMeasurements|MethodMeasurements $symbol): ?int
+    {
+        return $symbol instanceof ClassMeasurements
+            ? $this->classValue($symbol)
+            : $this->methodValue($symbol);
     }
 
     /**
@@ -66,12 +84,33 @@ final readonly class Policy
         return "{$this->metric->value} v{$this->metric->version()}";
     }
 
-    private static function make(Metric $metric, int $limit, bool $allowEmpty): self
+    private function methodValue(MethodMeasurements $method): ?int
+    {
+        return match ($this->metric) {
+            Metric::Ccn2 => $method->ccn2,
+            Metric::Lines => $method->lines,
+            Metric::Params => $method->params,
+            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
+        };
+    }
+
+    private function classValue(ClassMeasurements $class): ?int
+    {
+        return match ($this->metric) {
+            Metric::Ccn2, Metric::Lines, Metric::Params => null,
+            Metric::Methods => $class->declaredMethods($this->ignoringAccessors),
+            Metric::Properties => $class->properties,
+            Metric::Inheritance => $class->inheritance,
+            Metric::ClassLines => $class->classLines,
+        };
+    }
+
+    private static function make(Metric $metric, int $limit, bool $allowEmpty, bool $ignoringAccessors = false): self
     {
         if ($limit < 0) {
             throw InvalidLimit::negative($metric->label(), $limit);
         }
 
-        return new self($metric, $limit, $allowEmpty);
+        return new self($metric, $limit, $allowEmpty, $ignoringAccessors);
     }
 }

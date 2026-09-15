@@ -237,7 +237,7 @@ Both JSON documents carry `schemaVersion`, `generatedAt`, `versions` (`php`, `pe
 
 ## Selection and completeness
 
-Pest's architecture layer resolves a namespace to PSR-4 directories, then reflects each file it finds; a file that fails to autoload, or whose class lives in a different namespace than its directory implies, is silently dropped by Pest. A policy can then "pass" having measured nothing. This package tracks that instead of trusting it — exposed on the arch expectation's result as `IanRodrigues\CodeQuality\Selection\Coverage`: PHP files found, objects produced, objects with an AST, and eligible methods measured.
+Pest's architecture layer resolves a namespace to PSR-4 directories, then reflects each file it finds; a file that fails to autoload, or whose class lives in a different namespace than its directory implies, is silently dropped by Pest. A policy can then "pass" having measured nothing. This package tracks that instead of trusting it — exposed on the arch expectation's result as `IanRodrigues\CodeQuality\Selection\Coverage`: PHP files found, objects produced, objects with an AST, and eligible symbols measured.
 
 ### Empty selections error by default
 

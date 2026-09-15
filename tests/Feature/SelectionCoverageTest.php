@@ -78,7 +78,7 @@ it('scopes coverage to the exact directory, never a sibling sharing its prefix',
     expect($coverage->directories)->toBe(['tests/Fixtures/App/Billing'])
         ->and($coverage->filesFound)->toBe(1)
         ->and($coverage->objectsWithAst)->toBe(1)
-        ->and($coverage->eligibleMethods)->toBe(1)
+        ->and($coverage->eligibleSymbols)->toBe(1)
         ->and($coverage->skipped)->toBeEmpty();
 });
 
@@ -180,7 +180,7 @@ it('counts a functions file as found without treating it as skipped, and does no
     expect($coverage->filesFound)->toBe(2)
         ->and($coverage->withoutClasses)->toBe(1)
         ->and($coverage->objectsWithAst)->toBe(1)
-        ->and($coverage->eligibleMethods)->toBe(1)
+        ->and($coverage->eligibleSymbols)->toBe(1)
         ->and($coverage->skipped)->toBeEmpty()
         ->and(coverage_of($result)->skippedFiles())->toBeEmpty()
         ->and(WarningsCollector::all())->toBeEmpty();

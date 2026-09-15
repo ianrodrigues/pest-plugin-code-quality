@@ -33,9 +33,9 @@ final readonly class Coverage
         return $this->sum(static fn (TargetCoverage $target): int => $target->objectsWithAst);
     }
 
-    public function eligibleMethods(): int
+    public function eligibleSymbols(): int
     {
-        return $this->sum(static fn (TargetCoverage $target): int => $target->eligibleMethods);
+        return $this->sum(static fn (TargetCoverage $target): int => $target->eligibleSymbols);
     }
 
     public function withoutClasses(): int

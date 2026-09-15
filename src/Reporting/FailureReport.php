@@ -25,14 +25,16 @@ final class FailureReport
             array_slice($violations, 0, self::TRUNCATION_LIMIT),
         ));
 
-        return $blocks."\n\n".self::summary(count($violations));
+        return $blocks."\n\n".self::summary($result->policy, count($violations));
     }
 
-    private static function summary(int $total): string
+    private static function summary(Policy $policy, int $total): string
     {
+        $scope = $policy->metric->scope();
+
         $line = $total === 1
-            ? '1 method exceeds the limit'
-            : "{$total} methods exceed the limit";
+            ? "1 {$scope->value} exceeds the limit"
+            : "{$total} {$scope->plural()} exceed the limit";
 
         if ($total <= self::TRUNCATION_LIMIT) {
             return $line;
