@@ -7,13 +7,9 @@ namespace IanRodrigues\CodeQuality;
 use IanRodrigues\CodeQuality\Baseline\BaselineMode;
 
 /**
- * Process-wide, resettable configuration for the plugin: `pest()` is final
- * with no room for a `quality()` accessor, so `tests/Pest.php` configures
- * this instead:
- *
- *     \IanRodrigues\CodeQuality\Config::baseline(__DIR__.'/quality-baseline.json');
- *
- * CLI options are read first and win over whatever that file sets.
+ * Process-wide, resettable configuration for the plugin: `pest()` is
+ * final with no room for a `quality()` accessor, so `tests/Pest.php`
+ * configures this instead. CLI options are read first and win over it.
  */
 final class Config
 {

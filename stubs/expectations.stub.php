@@ -3,10 +3,9 @@
 declare(strict_types=1);
 
 /*
- * Editor support only, never autoloaded or executed — the expectations are
- * registered at runtime via `expect()->extend()`. PHPStan reads the same
- * seven methods from `extension.neon` instead: redeclaring them here would
- * drop the `@mixin` tags the architecture chain relies on.
+ * Editor support only, never autoloaded or executed; expectations are
+ * registered at runtime via `expect()->extend()`. PHPStan reads these
+ * same methods from `extension.neon`, which also carries the `@mixin` tags.
  */
 
 namespace Pest {
