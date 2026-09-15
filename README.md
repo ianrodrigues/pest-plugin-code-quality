@@ -149,6 +149,8 @@ A limit nobody meets yet is a limit nobody adds. A baseline records what every m
    ```
 
    Generating tolerates a baseline file that does not exist yet — that run is what creates it. It writes one entry per method above the limit and prints the diff — `added / removed / increased / decreased`. The file is the list of everything being accepted for now; review it like any other change. It needs a complete, error-free run: if any policy errored (an unreadable file, an empty selection, a skipped file under `Config::strict()`), nothing is written, because the missing policy's methods would silently be accepted.
+
+   A chain of several limits on one `arch()` call — `->toHaveMethodComplexityAtMost(10)->toHaveMethodLinesAtMost(40)->toHaveMethodParametersAtMost(4)` — records every one of them in this single run, not only the first that finds something to accept. The generating run itself still exits non-zero over code that still breaks a limit; the normal run right after it is the one that passes.
 4. **Commit the policy and the baseline together.** Apart, neither means anything: the baseline is the evidence for what the policy is allowed to ignore.
 5. **From then on, normal runs fail on regressions only.** A method already in the baseline may stay as bad as it was; one growing worse fails, and so does a new method over the limit that the baseline never saw.
 
