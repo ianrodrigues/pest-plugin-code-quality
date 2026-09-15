@@ -8,3 +8,8 @@ arch('fixture app methods stay within limits')
     ->toHaveMethodComplexityAtMost(10)
     ->toHaveMethodLinesAtMost(20)
     ->toHaveMethodParametersAtMost(4);
+
+arch('fixture app classes stay small')
+    ->expect('Fixture\App')
+    ->classes()
+    ->toHaveClassLinesAtMost(20);

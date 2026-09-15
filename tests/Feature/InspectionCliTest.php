@@ -75,7 +75,7 @@ it('prints every recorded policy, passing ones included, after the normal result
 
     expect($result['exitCode'])->toBe(0)
         ->and($result['output'])
-        ->toContain('Tests:    1 passed')
+        ->toContain('Tests:    2 passed')
         ->toContain('Quality inspection')
         ->toContain('fixture app methods stay within limits')
         ->toContain('tests/ArchTest.php:8')
@@ -85,14 +85,26 @@ it('prints every recorded policy, passing ones included, after the normal result
         ->toContain('Fixture\App\Reporting\Report::summarize (app/Reporting/Report.php:9) ccn2=3 lines=5 params=1');
 });
 
+it('prints a class-scoped policy with the class symbols it measured', function (): void {
+    $result = FixtureProject::runPest(['--quality-inspect', '--colors=never']);
+
+    expect($result['exitCode'])->toBe(0)
+        ->and($result['output'])
+        ->toContain('fixture app classes stay small')
+        ->toContain('Metric: classLines v1, limit 20')
+        ->toContain('Files found: 2  Objects: 2  With AST: 2  Classes measured: 2')
+        ->toContain('Fixture\App\Billing\Invoice (app/Billing/Invoice.php:7) methods=1 properties=0 inheritance=0 classLines=5')
+        ->toContain('Fixture\App\Reporting\Report (app/Reporting/Report.php:7) methods=1 properties=0 inheritance=0 classLines=6');
+});
+
 it('never changes the test outcome, with or without --quality-inspect', function (): void {
     $plain = FixtureProject::runPest(['--colors=never']);
     $inspected = FixtureProject::runPest(['--quality-inspect', '--colors=never']);
 
     expect($plain['exitCode'])->toBe(0)
         ->and($inspected['exitCode'])->toBe(0)
-        ->and($plain['output'])->toContain('Tests:    1 passed')
-        ->and($inspected['output'])->toContain('Tests:    1 passed');
+        ->and($plain['output'])->toContain('Tests:    2 passed')
+        ->and($inspected['output'])->toContain('Tests:    2 passed');
 });
 
 it('writes the full report as JSON to --quality-inspect=path, valid against the shipped schema', function (): void {
@@ -104,7 +116,7 @@ it('writes the full report as JSON to --quality-inspect=path, valid against the 
 
     $document = fixture_json($path);
 
-    expect($document['policies'])->toHaveCount(3);
+    expect($document['policies'])->toHaveCount(4);
 
     $schema = json_decode((string) file_get_contents(dirname(__DIR__, 2).'/schema/quality-report.v1.json'));
     $validator = new Validator();
@@ -162,5 +174,5 @@ it('never changes the test outcome under --parallel either', function (): void {
     $result = FixtureProject::runPest(['--parallel', '--quality-inspect', '--colors=never']);
 
     expect($result['exitCode'])->toBe(0)
-        ->and($result['output'])->toContain('Tests:    1 passed');
+        ->and($result['output'])->toContain('Tests:    2 passed');
 });
