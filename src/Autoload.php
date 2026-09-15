@@ -31,6 +31,11 @@ $register = static function (): void {
         /** @var Expectation<array<int, string>|string> $this */
         return PolicyExpectation::make($this, Policy::parameters($max, $allowEmpty));
     });
+
+    expect()->extend('toHaveMethodsAtMost', function (int $max, bool $ignoringAccessors = false, bool $allowEmpty = false): ArchExpectation {
+        /** @var Expectation<array<int, string>|string> $this */
+        return PolicyExpectation::make($this, Policy::methods($max, $ignoringAccessors, $allowEmpty));
+    });
 };
 
 if (function_exists('expect')) {
