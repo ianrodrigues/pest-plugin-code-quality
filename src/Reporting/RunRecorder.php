@@ -36,6 +36,7 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
  *         withAst: int,
  *         methodsMeasured: int,
  *         skipped: list<array{path: string, reason: string}>,
+ *         withoutClasses?: int,
  *     },
  *     baseline: array{
  *         path: string,
@@ -148,22 +149,56 @@ final class RunRecorder
     }
 
     /**
-     * @return array{filesFound: int, objects: int, withAst: int, methodsMeasured: int, skipped: list<array{path: string, reason: string}>}
+     * @return array{filesFound: int, objects: int, withAst: int, methodsMeasured: int, skipped: list<array{path: string, reason: string}>, withoutClasses?: int}
      */
     private static function coverageOf(PolicyResult $result): array
     {
         $coverage = $result->coverage;
 
         return [
+            ...self::coverageCounts($coverage),
+            'methodsMeasured' => $result->methodsMeasured,
+            'skipped' => self::skippedRows($coverage),
+            ...self::withoutClassesField($coverage),
+        ];
+    }
+
+    /**
+     * @return array{filesFound: int, objects: int, withAst: int}
+     */
+    private static function coverageCounts(?Coverage $coverage): array
+    {
+        return [
             'filesFound' => $coverage?->filesFound() ?? 0,
             'objects' => $coverage?->objectsProduced() ?? 0,
             'withAst' => $coverage?->objectsWithAst() ?? 0,
-            'methodsMeasured' => $result->methodsMeasured,
-            'skipped' => array_map(
-                static fn (SkippedFile $file): array => ['path' => $file->path, 'reason' => $file->reason->value],
-                $coverage?->skippedFiles() ?? [],
-            ),
         ];
+    }
+
+    /**
+     * @return list<array{path: string, reason: string}>
+     */
+    private static function skippedRows(?Coverage $coverage): array
+    {
+        return array_map(
+            static fn (SkippedFile $file): array => ['path' => $file->path, 'reason' => $file->reason->value],
+            $coverage?->skippedFiles() ?? [],
+        );
+    }
+
+    /**
+     * Present only when files without a class-like symbol were found:
+     * the rest of the coverage block always carries its keys, but this
+     * one is additive so an older `quality-report.v1.json` consumer
+     * ignores it safely.
+     *
+     * @return array{withoutClasses: int}|array{}
+     */
+    private static function withoutClassesField(?Coverage $coverage): array
+    {
+        $count = $coverage?->withoutClasses() ?? 0;
+
+        return $count > 0 ? ['withoutClasses' => $count] : [];
     }
 
     /**

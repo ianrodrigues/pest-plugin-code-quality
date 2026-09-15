@@ -38,6 +38,11 @@ final readonly class Coverage
         return $this->sum(static fn (TargetCoverage $target): int => $target->eligibleMethods);
     }
 
+    public function withoutClasses(): int
+    {
+        return $this->sum(static fn (TargetCoverage $target): int => $target->withoutClasses);
+    }
+
     /**
      * Every skipped file across every target, deduplicated by path since
      * overlapping targets can find the same file twice.

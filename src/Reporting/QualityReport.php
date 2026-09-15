@@ -28,6 +28,7 @@ use function Pest\version;
  *         withAst: int,
  *         methodsMeasured: int,
  *         skipped: list<array{path: string, reason: string}>,
+ *         withoutClasses?: int,
  *     },
  *     baseline?: BaselineDocument,
  *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
@@ -45,6 +46,7 @@ use function Pest\version;
  *         withAst: int,
  *         methodsMeasured: int,
  *         skipped: list<array{path: string, reason: string}>,
+ *         withoutClasses?: int,
  *     },
  *     baseline?: BaselineDocument,
  *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}>,
@@ -228,6 +230,7 @@ final readonly class QualityReport
                 $policy['coverage']['withAst'],
                 $policy['coverage']['methodsMeasured'],
             ),
+            ...$this->withoutClassesLines($policy),
         ];
 
         foreach ($this->baselineLines($policy) as $line) {
@@ -264,6 +267,17 @@ final readonly class QualityReport
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param PolicyEntry $policy
+     * @return list<string>
+     */
+    private function withoutClassesLines(array $policy): array
+    {
+        $count = $policy['coverage']['withoutClasses'] ?? 0;
+
+        return $count > 0 ? ["Files without classes: {$count}"] : [];
     }
 
     /**
