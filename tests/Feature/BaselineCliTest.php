@@ -95,6 +95,69 @@ function adoption_policy(
 }
 
 /**
+ * One `arch()` chain with all three method limits: `handle()` has 10 `if`s
+ * (ccn2 11, over the limit of 10), 5 declared parameters (over the limit
+ * of 4), and 21 counted body lines (under the limit of 40), so exactly two
+ * of the three chained expectations find a violation.
+ */
+function adoption_multi_metric_class(): void
+{
+    $body = "\n    public function handle(int \$a, int \$b, int \$c, int \$d, int \$e): int\n    {\n";
+
+    for ($branch = 1; $branch <= 10; $branch++) {
+        $body .= "        if (\$a === {$branch}) {\n            \$a++;\n        }\n\n";
+    }
+
+    $body .= "        return \$a + \$b + \$c + \$d + \$e;\n    }\n";
+
+    adoption_write(
+        'app/Legacy.php',
+        "<?php\n\ndeclare(strict_types=1);\n\nnamespace Fixture\\App;\n\nfinal class Legacy\n{{$body}}\n",
+    );
+}
+
+function adoption_chained_policy(string $description = 'chained limits', string $file = 'tests/PolicyTest.php'): void
+{
+    adoption_write($file, implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        "arch('{$description}')",
+        "    ->expect('Fixture\App')",
+        '    ->classes()',
+        '    ->toHaveMethodComplexityAtMost(10)',
+        '    ->toHaveMethodLinesAtMost(40)',
+        '    ->toHaveMethodParametersAtMost(4);',
+        '',
+    ]));
+}
+
+/**
+ * @return list<string> metric names, sorted, for every baseline entry filed under $symbol
+ */
+function adoption_metrics_for(string $symbol): array
+{
+    $entries = adoption_written_baseline()['entries'];
+
+    assert(is_array($entries));
+
+    $metrics = [];
+
+    foreach ($entries as $entry) {
+        assert(is_array($entry) && is_string($entry['symbol']) && is_array($entry['metric']) && is_string($entry['metric']['name']));
+
+        if ($entry['symbol'] === $symbol) {
+            $metrics[] = $entry['metric']['name'];
+        }
+    }
+
+    sort($metrics);
+
+    return $metrics;
+}
+
+/**
  * @param list<array{symbol: string, accepted: int, limit?: int, version?: int, policy?: string}> $entries
  */
 function adoption_baseline(array $entries, string $file = ADOPTION_BASELINE): void
@@ -446,6 +509,35 @@ it('generates the same baseline serially and in parallel', function (): void {
             'Fixture\App\Legacy::handle' => 16,
             'Fixture\App\Other::handle' => 21,
         ]);
+});
+
+it('generates entries for every metric a chained policy fails, in one run, and the next run passes', function (): void {
+    adoption_multi_metric_class();
+    adoption_chained_policy();
+
+    $generate = adoption_run(['--quality-baseline-generate']);
+
+    expect($generate['exitCode'])->not->toBe(0)
+        ->and($generate['output'])
+        ->toContain('Quality baseline written: quality-baseline.json')
+        ->toContain('added 2, removed 0, increased 0, decreased 0')
+        ->toContain('+ Fixture\App\Legacy::handle (ccn2 11)')
+        ->toContain('+ Fixture\App\Legacy::handle (params 5)')
+        ->and(adoption_metrics_for('Fixture\App\Legacy::handle'))->toBe(['ccn2', 'params'])
+        ->and(adoption_run()['exitCode'])->toBe(0);
+});
+
+it('generates entries for every metric a chained policy fails under --parallel too', function (): void {
+    adoption_multi_metric_class();
+    adoption_chained_policy();
+    adoption_class('Other', ['handle' => 5]);
+    adoption_policy(description: 'other stays put', file: 'tests/OtherTest.php', target: 'Fixture\App\Other');
+
+    $generate = adoption_run(['--quality-baseline-generate', '--parallel']);
+
+    expect($generate['exitCode'])->not->toBe(0)
+        ->and(adoption_metrics_for('Fixture\App\Legacy::handle'))->toBe(['ccn2', 'params'])
+        ->and(adoption_run(['--parallel'])['exitCode'])->toBe(0);
 });
 
 it('reads the baseline configured in tests/Pest.php, and lets the command line override it', function (): void {
