@@ -3,9 +3,10 @@
 declare(strict_types=1);
 
 /**
- * `invalid/expected.php` returns `['__error__' => true]` to signal an
- * analysis error instead of measurements; anonymous class methods and
- * property hooks are measured but never appear here (no stable symbol).
+ * `invalid/expected.php` returns `['__error__' => true]` to signal an analysis error; anonymous
+ * class methods and property hooks are measured but never appear here (no stable symbol).
+ * Method rows are `[ccn2, lines, params]` or `[ccn2, lines, params, methodName, variableName]`;
+ * class rows are keyed by class name; only the values a row gives are compared.
  */
 
 use IanRodrigues\CodeQuality\Analysis\AnalysisError;
@@ -30,16 +31,72 @@ dataset('metric fixtures', function (): iterable {
 });
 
 /**
+ * Every row `expected.php` declares is a list or a map of `int|null`
+ * values; this both selects method or class rows by their key shape and
+ * gives each value the type the rest of this file compares against.
+ *
  * @param array<string, mixed> $expected
- * @return array<string, mixed>
+ * @return array<string, array<int|string, int|null>>
  */
 function fixture_rows_of(array $expected, bool $methods): array
 {
-    return array_filter(
-        $expected,
-        static fn (string $symbol): bool => str_contains($symbol, '::') === $methods,
-        ARRAY_FILTER_USE_KEY,
-    );
+    $rows = [];
+
+    foreach ($expected as $symbol => $row) {
+        if (str_contains($symbol, '::') !== $methods || ! is_array($row)) {
+            continue;
+        }
+
+        $rows[$symbol] = array_map(
+            static fn (mixed $value): int|null => is_int($value) ? $value : null,
+            $row,
+        );
+    }
+
+    return $rows;
+}
+
+/**
+ * Trims each measured method row down to as many values as the fixture's
+ * own row gives, so a fixture written before `methodName` and
+ * `variableName` existed keeps comparing only `[ccn2, lines, params]`.
+ *
+ * @param array<string, array<int|string, int|null>> $actual
+ * @param array<string, array<int|string, int|null>> $expected
+ * @return array<string, array<int|string, int|null>>
+ */
+function fixture_method_rows(array $actual, array $expected): array
+{
+    $trimmed = [];
+
+    foreach ($actual as $symbol => $row) {
+        $length = array_key_exists($symbol, $expected) ? count($expected[$symbol]) : count($row);
+        $trimmed[$symbol] = array_slice($row, 0, $length);
+    }
+
+    return $trimmed;
+}
+
+/**
+ * Drops any measured class key the fixture's own row does not give, so a
+ * fixture written before `className` existed keeps comparing only its
+ * original keys.
+ *
+ * @param array<string, array<int|string, int|null>> $actual
+ * @param array<string, array<int|string, int|null>> $expected
+ * @return array<string, array<int|string, int|null>>
+ */
+function fixture_class_rows(array $actual, array $expected): array
+{
+    $trimmed = [];
+
+    foreach ($actual as $symbol => $row) {
+        $trimmed[$symbol] = array_key_exists($symbol, $expected)
+            ? array_intersect_key($row, $expected[$symbol])
+            : $row;
+    }
+
+    return $trimmed;
 }
 
 it('matches the measurer contract against every pinned fixture', function (string $fixturePath, string $expectedPath): void {
@@ -54,11 +111,13 @@ it('matches the measurer contract against every pinned fixture', function (strin
         return;
     }
 
-    expect($measurer->measure($fixturePath))->toBe(fixture_rows_of($expected, true));
+    $expectedMethods = fixture_rows_of($expected, true);
 
-    $classes = fixture_rows_of($expected, false);
+    expect(fixture_method_rows($measurer->measure($fixturePath), $expectedMethods))->toBe($expectedMethods);
 
-    if ($classes !== []) {
-        expect($measurer->measureClasses($fixturePath))->toBe($classes);
+    $expectedClasses = fixture_rows_of($expected, false);
+
+    if ($expectedClasses !== []) {
+        expect(fixture_class_rows($measurer->measureClasses($fixturePath), $expectedClasses))->toBe($expectedClasses);
     }
 })->with('metric fixtures');
