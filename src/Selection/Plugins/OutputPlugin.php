@@ -21,13 +21,9 @@ use Pest\TestSuite;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Prints skipped files once, after the run, and handles the
- * `--quality-*` and baseline options. Registered in `composer.json`'s
- * `extra.pest.plugins`.
- *
- * CLI flags never reach a worker process under `--parallel` (Pest strips
- * them before spawning it), so they round-trip through
- * `Parallel::setGlobal()`/`getGlobal()` instead.
+ * Registered in `composer.json`'s `extra.pest.plugins`. CLI flags never
+ * reach a worker under `--parallel` (Pest strips them before spawning
+ * it), so they round-trip through `Parallel::setGlobal()`/`getGlobal()`.
  *
  * @phpstan-import-type PolicyEntry from RunRecorder
  */
@@ -306,7 +302,6 @@ final class OutputPlugin implements AddsOutput, HandlesArguments, Terminable
     private function decodeEntries(string $contents): array
     {
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return [];

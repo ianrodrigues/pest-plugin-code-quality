@@ -26,12 +26,9 @@ use PHPUnit\Architecture\Elements\ObjectDescription;
 use Symfony\Component\Finder\Finder;
 
 /**
- * Walks the same directories Pest's own `ObjectsRepository` does, rather
- * than guessing at completeness.
- *
- * Discovery ignores `classes()`/`ignoring()` filters (those are deliberate
- * choices, not gaps); eligibility, which drives `EmptySelection`, uses the
- * filtered objects a policy actually measures.
+ * Mirrors Pest's `ObjectsRepository` directory walk instead of
+ * reimplementing discovery; discovery ignores `classes()`/`ignoring()`
+ * filters, but eligibility for `EmptySelection` respects them.
  */
 final readonly class Scanner
 {
@@ -240,10 +237,9 @@ final readonly class Scanner
     }
 
     /**
-     * The most specific resolved directory a file was actually found
-     * under, matched by directory containment rather than string prefix so
-     * sibling namespaces sharing a prefix (`Billing` vs `BillingArchive`)
-     * never cross-attribute.
+     * Matches by directory containment, not string prefix, so sibling
+     * namespaces sharing a prefix (`Billing` vs `BillingArchive`) never
+     * cross-attribute.
      *
      * @param list<ResolvedDirectory> $directories
      */
