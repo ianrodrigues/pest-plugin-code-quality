@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-# Validates the commit message against Conventional Commits.
 msg_file="$1"
 subject=$(sed -n '1p' "$msg_file")
 
