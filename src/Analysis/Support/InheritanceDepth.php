@@ -8,12 +8,9 @@ use ReflectionClass;
 use Throwable;
 
 /**
- * Walks a class up to its root, counting one for each parent. The file
- * being measured answers for the classes it declares itself, so a chain
- * written in one file is counted without loading anything; every other
- * parent is resolved by reflection, which is what makes a vendor parent
- * count even though its body is never analysed. A parent that cannot be
- * loaded at all ends the walk where it is last known.
+ * Walks a class up to its root, counting one parent per step. A class
+ * from the measured file resolves without loading; everything else
+ * falls back to reflection, so an unloadable parent just ends the walk.
  */
 final class InheritanceDepth
 {

@@ -8,10 +8,9 @@ use LogicException;
 use PhpToken;
 
 /**
- * Counts a method's body lines from the token stream of its source file,
- * per the "Metric definitions" README section: the physical lines between
- * a method's opening and closing brace that contain at least one token
- * other than whitespace, a comment, or a standalone `{`/`}` character.
+ * Counts a method's body lines per the "Metric definitions" README
+ * section: the physical lines between the opening and closing brace
+ * that hold at least one token besides whitespace, a comment, or `{`/`}`.
  */
 final readonly class SourceTokens
 {
@@ -105,10 +104,8 @@ final readonly class SourceTokens
     }
 
     /**
-     * Whether the token opens a brace that a plain `}` closes.
-     *
-     * Interpolated strings open theirs with `{$` or `${`, which tokenize
-     * as `T_CURLY_OPEN` and `T_DOLLAR_OPEN_CURLY_BRACES` rather than as a
+     * Interpolated strings open their brace with `{$` or `${`, tokenizing
+     * as `T_CURLY_OPEN` or `T_DOLLAR_OPEN_CURLY_BRACES` rather than a
      * literal `{`, while still closing with a plain `}`.
      */
     private function isOpenBrace(PhpToken $token): bool
