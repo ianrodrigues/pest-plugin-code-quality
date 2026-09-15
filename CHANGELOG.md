@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- A `Counted:` block at the end of a `ccn2`, `methods`, `properties` or `inheritance` failure, listing what produced the value: the counted constructs grouped by kind with the line of each occurrence, the declared methods or properties with their lines, or the parents nearest first. Every violation in the JSON report carries the same items as `contributions[]`; `schema/quality-report.v1.json` gains the field as optional and keeps its version.
 
 ## [0.2.0] - 2026-09-15
 

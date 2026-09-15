@@ -53,7 +53,7 @@ arch('parsers stay within their complexity budget')
     ->toHaveMethodComplexityAtMost(20);
 ```
 
-Run the suite. A method over budget fails with the offending symbol, its location, and how far past the limit it is — this is the real output of the policy above against a `CheckoutController::store` that has grown too many branches:
+Run the suite. A method over budget fails with the offending symbol, its location, how far past the limit it is, and what was counted — this is the real output of the policy above against a `CheckoutController::store` that has grown too many branches:
 
 <!-- readme-test: quick-start-failure -->
 ```
@@ -63,6 +63,12 @@ app/Http/Controllers/CheckoutController.php:9
 Method complexity (ccn2 v1): 11
 Allowed: at most 10
 Exceeded by: 1
+Counted:
+  4 x if (lines 15, 22, 27, 32)
+  2 x ?? (lines 19, 20)
+  2 x match arm (lines 34, 35)
+  1 x foreach (line 14)
+  1 x && (line 22)
 
 1 method exceeds the limit
 ```
@@ -128,6 +134,16 @@ public function legacyEntryPoint(array $payload): array
 
 `@pest-arch-ignore-next-line` on the line before the declaration works the same way, for a docblock that already carries something else.
 
+### What `Counted` lists
+
+A failure on `ccn2`, `methods`, `properties` or `inheritance` ends with a `Counted:` block: the items that produced the value.
+
+- `ccn2` groups the counted constructs by kind, most frequent first, with the line of each occurrence: `4 x if (lines 15, 22, 27, 32)`. The 1 every method starts with is not an item, so the counts add up to the value minus one.
+- `methods` and `properties` list each counted declaration with its line: `store (line 9)`. With `ignoringAccessors: true`, an accessor is out of the list as it is out of the count.
+- `inheritance` lists the parents, nearest first.
+
+A list of more than 10 declarations or parents stops there and points at the JSON report, where every violation carries the full list as `contributions[]`. The other metrics have nothing to list: `lines`, `params`, `classLines` and the three name lengths are the value itself.
+
 ### `not` is unsupported
 
 `->not->toHaveMethodComplexityAtMost(10)` throws `IanRodrigues\CodeQuality\Exceptions\UnsupportedModifier` rather than accepting a nonsensical query: a numeric limit has no negation. Lower the limit instead. A negative limit throws `IanRodrigues\CodeQuality\Exceptions\InvalidLimit` where the expectation is declared, before anything runs.
@@ -169,6 +185,8 @@ Allowed: at most 10
 Accepted: 14
 Increase: 1
 Exceeded by: 5
+Counted:
+  14 x if (lines 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63)
 ```
 
 `--quality-baseline=path/to/baseline.json` configures the file for one run, overriding `Config::baseline()`. A baseline that is configured but missing or malformed is an error, not an empty baseline: silently accepting nothing would turn a typo into a green suite.
@@ -260,7 +278,7 @@ vendor/bin/pest --quality-json=path/to/report.json
 
 Writes only findings — violations, errors, and completeness counts — without the per-method measurements, for a smaller report. Same schema, `measurements` omitted.
 
-Both JSON documents carry `schemaVersion`, `generatedAt`, `versions` (`php`, `pest`, `plugin`), a `policies[]` list each with `id`, `location`, `targets`, `metric`, `limit`, `coverage`, `violations[]`, `errors[]`, and a top-level `truncated: false`. A policy run with a baseline configured also carries a `baseline` block: its `path`, how many entries `applied`, and the `stale[]` ones.
+Both JSON documents carry `schemaVersion`, `generatedAt`, `versions` (`php`, `pest`, `plugin`), a `policies[]` list each with `id`, `location`, `targets`, `metric`, `limit`, `coverage`, `violations[]`, `errors[]`, and a top-level `truncated: false`. A violation row carries `symbol`, `path`, `line`, `value`, `limit` and `contributions[]`: the items a failure lists under `Counted`, each with a `label` and a `line` (`null` for a parent), and an empty list for a metric that has none. A policy run with a baseline configured also carries a `baseline` block: its `path`, how many entries `applied`, and the `stale[]` ones.
 
 ## Selection and completeness
 
