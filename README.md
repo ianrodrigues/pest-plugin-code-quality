@@ -467,7 +467,7 @@ final class ClassLinesExample
 - `params` applies to every declared method, including abstract and interface methods.
 - A trait method belongs to the trait, never to any class that uses it. An anonymous class's own methods are measured (their control flow never contributes to the enclosing method's `ccn2`) but are never an assertable target; the physical lines of an anonymous class declaration do count towards the `lines` of the method that declares it, since they sit inside that method's braces.
 - Inherited methods are never counted on the child class — only where they are declared.
-- `methods`, `properties` and `classLines` apply to every named class, interface, trait and enum. An interface and an enum declare no property, so both measure `0` there.
+- `methods`, `properties` and `classLines` apply to every named class, interface, trait and enum. An enum declares no property, so it measures `0` there; an interface usually does too, but since PHP 8.4 it may declare one through a property hook, which counts here like any other.
 - `inheritance` applies to a class only. It is `null` (ineligible), never `0`, for an interface, a trait and an enum.
 - An anonymous class is measured but is never an assertable target, exactly as its methods are not.
 
