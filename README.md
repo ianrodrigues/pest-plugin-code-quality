@@ -79,13 +79,14 @@ Every expectation takes:
 
 A class-scoped expectation names the class in its failure, and points at the class declaration:
 
+<!-- readme-test: class-failure -->
 ```
 App\Http\Controllers\CheckoutController
 app/Http/Controllers/CheckoutController.php:7
 
-Class methods (methods v1): 12
-Allowed: at most 10
-Exceeded by: 2
+Class lines (classLines v1): 21
+Allowed: at most 20
+Exceeded by: 1
 
 1 class exceeds the limit
 ```

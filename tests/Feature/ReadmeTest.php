@@ -290,3 +290,17 @@ it('measures the class lines worked example at the count the README gives it', f
     expect($result['exitCode'])->not->toBe(0)
         ->and($result['output'])->toContain('Class lines (classLines v1): 3');
 });
+
+it('names the class, not a method, when a class-scoped expectation fails', function (): void {
+    ReadmeProject::writeTest(implode("\n", [
+        "arch('controllers stay small')",
+        "    ->expect('App\Http\Controllers')",
+        '    ->classes()',
+        '    ->toHaveClassLinesAtMost(20);',
+    ]));
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain(trim(ReadmeProject::block('class-failure')));
+});

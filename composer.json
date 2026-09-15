@@ -1,6 +1,6 @@
 {
     "name": "ianrodrigues/pest-plugin-code-quality",
-    "description": "Method-level maintainability limits (complexity, body lines, parameters) as Pest architecture expectations, with baselines for gradual adoption.",
+    "description": "Method-level and class-level maintainability limits (complexity, body lines, parameters, methods, properties, inheritance depth) as Pest architecture expectations, with baselines for gradual adoption.",
     "type": "library",
     "keywords": [
         "pest",

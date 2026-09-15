@@ -72,7 +72,7 @@ composer perf
 
 ## Fixtures
 
-Every counted construct has a fixture under `tests/Fixtures/Metrics/<topic>/`: a `Fixture.php` whose methods carry a hand-derived breakdown comment (`// ccn2: 1 + if + && = 3`), and an `expected.php` returning `[symbol => [ccn2, lines, params]]`. `tests/Unit/Metrics/FixtureSuiteTest.php` picks up a new topic directory automatically.
+Every counted construct has a fixture under `tests/Fixtures/Metrics/<topic>/`: a `Fixture.php` whose methods carry a hand-derived breakdown comment (`// ccn2: 1 + if + && = 3`), and an `expected.php` returning one row per symbol. A key holding `::` is a method row, `'App\Foo::bar' => [ccn2, lines, params]`. Every other key is a class row, `'App\Foo' => ['methods' => 3, 'accessors' => 1, 'properties' => 2, 'inheritance' => 1, 'classLines' => 12]`, and a topic that declares one declares one for every class-like it holds. `tests/Unit/Metrics/FixtureSuiteTest.php` picks up a new topic directory automatically.
 
 `tests/Fixtures/App/` is measured in-process. `tests/Fixtures/Project/`, `Adoption/` and `Readme/` are throwaway Pest projects driven through `vendor/bin/pest` by `tests/Support/FixtureProject.php`; use them only for behaviour that needs a real process, such as a CLI option or `--parallel`.
 
@@ -81,7 +81,7 @@ Every executable sample in `README.md` is tagged with `<!-- readme-test: <name> 
 ## Adding a metric
 
 1. Write the fixtures first; they are the specification.
-1. Add a case to `src/Metrics/Metric.php` and a row in each of its `match` methods.
+1. Add a case to `src/Metrics/Metric.php` and a row in each of its `match` methods, its `scope()` included.
 1. Compute the value in `src/Analysis/Support/MetricsVisitor.php`.
 1. Add a `Policy` factory in `src/Policies/Policy.php` and register the expectation in `src/Autoload.php`.
 1. Add the `@method` line to `stubs/expectations.stub.php` and the name to `src/PHPStan/MethodLimitsExtension.php`.
