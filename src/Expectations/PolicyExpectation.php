@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Expectations;
 
 use IanRodrigues\CodeQuality\Analysis\AnalysisError;
+use IanRodrigues\CodeQuality\Baseline\BaselineMode;
 use IanRodrigues\CodeQuality\Baseline\PolicyIdentity;
 use IanRodrigues\CodeQuality\Config;
 use IanRodrigues\CodeQuality\Exceptions\QualityAnalysisError;
@@ -51,13 +52,25 @@ final class PolicyExpectation
 
                 RunRecorder::record($result, $location, $targets->values(), array_values($options->exclude));
 
-                if ($result->passed()) {
+                if ($result->passed() || self::isRewritingBaseline()) {
                     return;
                 }
 
                 throw QualityExpectationFailed::fromResult($result);
             },
         );
+    }
+
+    /**
+     * A chain of several limits on one `arch()` call verifies its
+     * expectations one at a time, each only once the next is asked for;
+     * throwing here would stop the chain short and leave the later limits
+     * unrecorded. `OutputPlugin` fails the run instead, off the violations
+     * every recorded policy carries.
+     */
+    private static function isRewritingBaseline(): bool
+    {
+        return Config::baselineMode() !== BaselineMode::Check;
     }
 
     /**
