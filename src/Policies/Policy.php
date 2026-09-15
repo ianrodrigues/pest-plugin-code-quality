@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Policies;
 
 use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
+use IanRodrigues\CodeQuality\Analysis\Contribution;
 use IanRodrigues\CodeQuality\Analysis\FileMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Exceptions\InvalidLimit;
@@ -102,6 +103,16 @@ final readonly class Policy
         return $symbol instanceof ClassMeasurements
             ? $this->classValue($symbol)
             : $this->methodValue($symbol);
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function contributionsFor(ClassMeasurements|MethodMeasurements $symbol): array
+    {
+        return $symbol instanceof ClassMeasurements
+            ? $symbol->contributionsTo($this->metric, $this->ignoringAccessors)
+            : $symbol->contributionsTo($this->metric);
     }
 
     /**

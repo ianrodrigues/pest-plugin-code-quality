@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Reporting;
 
 use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
+use IanRodrigues\CodeQuality\Analysis\Contribution;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Baseline\BaselineEntry;
 use IanRodrigues\CodeQuality\Baseline\DuplicatePolicyIdentity;
@@ -51,7 +52,7 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
  *         stale: list<BaselineEntryRow>,
  *     }|null,
  *     measurements: list<MeasurementRow>,
- *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
+ *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int, contributions: list<array{label: string, line: int|null}>}>,
  *     errors: list<string>,
  * }
  */
@@ -300,7 +301,7 @@ final class RunRecorder
     }
 
     /**
-     * @return array{symbol: string, path: string, line: int, value: int, limit: int}
+     * @return array{symbol: string, path: string, line: int, value: int, limit: int, contributions: list<array{label: string, line: int|null}>}
      */
     private static function violationRow(Violation $violation): array
     {
@@ -310,6 +311,7 @@ final class RunRecorder
             'line' => $violation->line,
             'value' => $violation->value,
             'limit' => $violation->limit,
+            'contributions' => array_map(static fn (Contribution $c): array => $c->toArray(), $violation->contributions),
         ];
     }
 }

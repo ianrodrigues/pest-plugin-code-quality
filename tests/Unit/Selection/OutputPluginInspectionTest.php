@@ -162,18 +162,38 @@ it('merges a worker\'s persisted partial into the orchestrator\'s report, then c
         ],
         'baseline' => null,
         'measurements' => [['symbol' => 'App\\Worker::run', 'path' => 'app/Worker.php', 'line' => 3, 'ccn2' => 1, 'lines' => 1, 'params' => 0]],
-        'violations' => [],
+        'violations' => [[
+            'symbol' => 'App\\Worker::run',
+            'path' => 'app/Worker.php',
+            'line' => 3,
+            'value' => 12,
+            'limit' => 10,
+            'contributions' => [['label' => 'if', 'line' => 5], ['label' => '&&', 'line' => 5]],
+        ]],
         'errors' => [],
     ]];
 
     file_put_contents($directory.DIRECTORY_SEPARATOR.'worker-1.json', json_encode($partial, JSON_THROW_ON_ERROR));
 
+    $report = sys_get_temp_dir().DIRECTORY_SEPARATOR.'quality-report-'.uniqid().'.json';
+
     $output = new BufferedOutput();
     $plugin = new OutputPlugin($output);
-    $plugin->handleArguments(['--quality-inspect']);
+    $plugin->handleArguments(['--quality-inspect='.$report]);
 
     $plugin->addOutput(0);
 
-    expect($output->fetch())->toContain('a worker test')->toContain('App\Worker::run')
-        ->and($directory)->not->toBeDirectory();
+    $policy = first_policy(decoded_report($report));
+    @unlink($report);
+
+    expect($directory)->not->toBeDirectory()
+        ->and($policy['id'])->toBe('a worker test')
+        ->and($policy['violations'])->toBe([[
+            'symbol' => 'App\\Worker::run',
+            'path' => 'app/Worker.php',
+            'line' => 3,
+            'value' => 12,
+            'limit' => 10,
+            'contributions' => [['label' => 'if', 'line' => 5], ['label' => '&&', 'line' => 5]],
+        ]]);
 });

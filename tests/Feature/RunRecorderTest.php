@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use IanRodrigues\CodeQuality\Exceptions\QualityExpectationFailed;
 use IanRodrigues\CodeQuality\Reporting\RunRecorder;
+use IanRodrigues\CodeQuality\Tests\Fixtures\App\Structure\Wide;
 
 beforeEach(function (): void {
     RunRecorder::reset();
@@ -60,6 +61,35 @@ it('records a failing policy including its violations, without aborting the reco
     expect($entry['location']['line'])->toBe($line)
         ->and($entry['violations'])->toHaveCount(1)
         ->and($entry['violations'][0]['symbol'])->toBe('IanRodrigues\CodeQuality\Tests\Fixtures\App\Parsing\Parser::parse');
+});
+
+it('records the contributions behind a methods violation, with the accessors excluded', function (): void {
+    $chain = policy(fn () => expect(FIXTURE_APP.'\Structure')
+        ->classes()
+        ->toHaveMethodsAtMost(1, ignoringAccessors: true));
+
+    expect($chain)->toThrow(QualityExpectationFailed::class);
+
+    $entries = RunRecorder::all();
+    $entry = $entries[0];
+
+    expect($entry['violations'])->toHaveCount(1)
+        ->and($entry['violations'][0]['symbol'])->toBe(Wide::class)
+        ->and($entry['violations'][0]['contributions'])->toBe([
+            ['label' => '__construct', 'line' => 13],
+            ['label' => 'describe', 'line' => 29],
+        ]);
+});
+
+it('records an empty contributions list for a metric with no breakdown', function (): void {
+    $chain = policy(fn () => expect(FIXTURE_APP.'\Parsing')->classes()->toHaveMethodLinesAtMost(1));
+
+    expect($chain)->toThrow(QualityExpectationFailed::class);
+
+    $entry = RunRecorder::all()[0];
+
+    expect($entry['violations'])->not->toBeEmpty()
+        ->and($entry['violations'][0]['contributions'])->toBeEmpty();
 });
 
 it('records exclusions applied through ignoring()', function (): void {
