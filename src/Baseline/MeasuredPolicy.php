@@ -27,10 +27,9 @@ final readonly class MeasuredPolicy
     }
 
     /**
-     * Existing entries lowered to what this run measured. A value never
-     * rises here, a symbol that is gone or back within the limit loses its
-     * entry, and a symbol nobody had an entry for gains none: tightening
-     * only ever gives allowance back.
+     * Existing entries lowered to what this run measured: a value never
+     * rises here, an entry that no longer matches or falls within the
+     * limit is dropped, and a symbol with no existing entry gains none.
      *
      * @param list<BaselineEntry> $entries
      * @return list<BaselineEntry>

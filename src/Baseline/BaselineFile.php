@@ -13,9 +13,8 @@ use ValueError;
 
 /**
  * Reads and writes the baseline document described by
- * `schema/quality-baseline.v1.json`. Nothing here trusts the file: a
- * document that does not match the schema is an error, never a partially
- * honoured baseline.
+ * `schema/quality-baseline.v1.json`; a document that does not match the
+ * schema is always an error, never partially honoured.
  */
 final class BaselineFile
 {
@@ -32,7 +31,6 @@ final class BaselineFile
         $contents = (string) file_get_contents($path);
 
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw BaselineError::malformed($path, $exception->getMessage());
