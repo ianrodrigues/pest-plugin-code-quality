@@ -3,16 +3,9 @@
 declare(strict_types=1);
 
 /**
- * `invalid/expected.php` returns `['__error__' => true]` instead of
- * measurements: the engine must raise an analysis error there, never skip
- * it silently. Anonymous class methods and property hooks are measured
- * but never appear in `expected.php`, having no stable `Class::method`
- * symbol.
- *
- * A key holding `::` is a method row, `[ccn2, lines, params]`. Every other
- * key is a class row, `['methods' => …, 'accessors' => …, 'properties' =>
- * …, 'inheritance' => …, 'classLines' => …]`, and a topic that declares
- * one declares one for every class-like it holds.
+ * `invalid/expected.php` returns `['__error__' => true]` to signal an
+ * analysis error instead of measurements; anonymous class methods and
+ * property hooks are measured but never appear here (no stable symbol).
  */
 
 use IanRodrigues\CodeQuality\Analysis\AnalysisError;

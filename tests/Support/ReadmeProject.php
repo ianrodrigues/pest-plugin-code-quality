@@ -7,10 +7,9 @@ namespace IanRodrigues\CodeQuality\Tests\Support;
 use RuntimeException;
 
 /**
- * Runs the exact code published in README.md against a throwaway project,
- * so a documentation sample can never silently drift from what the plugin
- * does. Wraps `FixtureProject` rather than changing it, since pulling
- * fenced blocks and naming the project are concerns of these tests alone.
+ * Runs the exact code published in README.md against a throwaway
+ * project, so a doc sample can never silently drift. Wraps
+ * `FixtureProject` instead of changing it: parsing fenced blocks is this class's job alone.
  */
 final class ReadmeProject
 {
