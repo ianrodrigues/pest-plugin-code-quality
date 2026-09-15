@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use IanRodrigues\CodeQuality\Reporting\RunRecorder;
 use IanRodrigues\CodeQuality\Selection\Plugins\OutputPlugin;
+use IanRodrigues\CodeQuality\Selection\WarningsCollector;
 use Pest\TestSuite;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -36,10 +37,12 @@ function first_policy(array $document): array
 
 beforeEach(function (): void {
     RunRecorder::reset();
+    WarningsCollector::reset();
 });
 
 afterEach(function (): void {
     RunRecorder::reset();
+    WarningsCollector::reset();
 });
 
 it('strips a bare --quality-inspect flag from the arguments', function (): void {
