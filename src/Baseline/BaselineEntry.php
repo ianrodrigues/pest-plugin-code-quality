@@ -7,14 +7,9 @@ namespace IanRodrigues\CodeQuality\Baseline;
 use IanRodrigues\CodeQuality\Metrics\Metric;
 
 /**
- * One accepted excess: a symbol a policy measured above its limit when the
- * baseline was written.
- *
- * `$version` is the metric's definition version at generation time, kept
- * apart from `$metric`'s own (current) `version()` so that a metric
- * definition bump marks the entry stale instead of silently reinterpreting
- * it. `$limit` is the limit configured at generation time, kept for the
- * same reason. `$path` is diagnostic only and never part of any identity.
+ * One accepted excess. `$version` and `$limit` are captured at
+ * generation time, apart from their current values, so a change
+ * marks the entry stale instead of silently reinterpreting it.
  *
  * @phpstan-type BaselineEntryRow array{
  *     policy: string,

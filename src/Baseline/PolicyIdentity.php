@@ -7,11 +7,9 @@ namespace IanRodrigues\CodeQuality\Baseline;
 use IanRodrigues\CodeQuality\Policies\Policy;
 
 /**
- * The stable name a baseline entry belongs to.
- *
- * Neither the file nor the line a policy is declared on takes part, so
- * moving or reordering a test file keeps every entry valid. The limit takes
- * no part either: changing it must mark entries stale, not orphan them.
+ * The stable name a baseline entry belongs to: the file, line and limit
+ * a policy is declared with take no part, so moving a test or changing
+ * its limit never orphans the entry — only marks it stale.
  */
 final class PolicyIdentity
 {
@@ -43,9 +41,8 @@ final class PolicyIdentity
 
     /**
      * A description-less `arch()` chain still gets one, built by Pest from
-     * the chain itself; since no flag survives past declaration time, the
-     * chain's own shape — ending in this policy's expectation — is what
-     * gives it away.
+     * the chain itself; since no flag survives past declaration time, its
+     * shape — ending in this policy's expectation — is what gives it away.
      */
     private static function isWritten(string $description, Policy $policy): bool
     {
