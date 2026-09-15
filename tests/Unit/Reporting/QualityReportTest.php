@@ -18,7 +18,7 @@ use JsonSchema\Validator;
  *     exclusions: list<string>,
  *     coverage: array{filesFound: int, objects: int, withAst: int, methodsMeasured: int, classesMeasured: int, skipped: list<array{path: string, reason: string}>},
  *     baseline: array{path: string, applied: int, accepted: array<string, int>, stale: list<array{policy: string, symbol: string, metric: array{name: string, version: int}, limit: int, accepted: int, path: string}>}|null,
- *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}>,
+ *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int, methodName: int, variableName: int}>,
  *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
  *     errors: list<string>,
  * }
@@ -44,8 +44,8 @@ function quality_entry(string $id, string $file, int $line, string $metric = 'cc
         ],
         'baseline' => null,
         'measurements' => [
-            ['symbol' => 'App\\Foo::z', 'path' => 'app/Foo/B.php', 'line' => 20, 'ccn2' => 3, 'lines' => 5, 'params' => 0],
-            ['symbol' => 'App\\Foo::a', 'path' => 'app/Foo/A.php', 'line' => 10, 'ccn2' => 1, 'lines' => 2, 'params' => 1],
+            ['symbol' => 'App\\Foo::z', 'path' => 'app/Foo/B.php', 'line' => 20, 'ccn2' => 3, 'lines' => 5, 'params' => 0, 'methodName' => 1, 'variableName' => 0],
+            ['symbol' => 'App\\Foo::a', 'path' => 'app/Foo/A.php', 'line' => 10, 'ccn2' => 1, 'lines' => 2, 'params' => 1, 'methodName' => 1, 'variableName' => 0],
         ],
         'violations' => [],
         'errors' => [],

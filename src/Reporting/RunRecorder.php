@@ -22,8 +22,8 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
  * worker process can serialise its share straight to JSON.
  *
  * @phpstan-import-type BaselineEntryRow from BaselineEntry
- * @phpstan-type MethodRow array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}
- * @phpstan-type ClassRow array{symbol: string, path: string, line: int, methods: int, properties: int, inheritance: int|null, classLines: int}
+ * @phpstan-type MethodRow array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int, methodName: int, variableName: int}
+ * @phpstan-type ClassRow array{symbol: string, path: string, line: int, methods: int, properties: int, inheritance: int|null, classLines: int, className: int}
  * @phpstan-type MeasurementRow ClassRow|MethodRow
  * @phpstan-type CoverageRow array{
  *     filesFound: int,
@@ -282,6 +282,8 @@ final class RunRecorder
                 'ccn2' => $symbol->ccn2,
                 'lines' => $symbol->lines,
                 'params' => $symbol->params,
+                'methodName' => $symbol->methodName,
+                'variableName' => $symbol->variableName,
             ];
         }
 
@@ -293,6 +295,7 @@ final class RunRecorder
             'properties' => $symbol->properties,
             'inheritance' => $symbol->inheritance,
             'classLines' => $symbol->classLines,
+            'className' => $symbol->className,
         ];
     }
 

@@ -40,6 +40,8 @@ it('records a passing policy with its declaration site, targets and measurements
         'ccn2' => 2,
         'lines' => 4,
         'params' => 1,
+        'methodName' => 5,
+        'variableName' => 5,
     ]);
 });
 

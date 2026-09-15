@@ -62,6 +62,21 @@ final readonly class Policy
         return self::make(Metric::ClassLines, $limit, $allowEmpty);
     }
 
+    public static function classNames(int $limit, bool $allowEmpty = false): self
+    {
+        return self::make(Metric::ClassName, $limit, $allowEmpty);
+    }
+
+    public static function methodNames(int $limit, bool $allowEmpty = false): self
+    {
+        return self::make(Metric::MethodName, $limit, $allowEmpty);
+    }
+
+    public static function variableNames(int $limit, bool $allowEmpty = false): self
+    {
+        return self::make(Metric::VariableName, $limit, $allowEmpty);
+    }
+
     /**
      * The symbols this policy compares against its limit: the methods of
      * the file for a method-scoped metric, its class-like declarations for
@@ -109,18 +124,21 @@ final readonly class Policy
             Metric::Ccn2 => $method->ccn2,
             Metric::Lines => $method->lines,
             Metric::Params => $method->params,
-            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
+            Metric::MethodName => $method->isMagicMethod() ? null : $method->methodName,
+            Metric::VariableName => $method->variableName,
+            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines, Metric::ClassName => null,
         };
     }
 
     private function classValue(ClassMeasurements $class): ?int
     {
         return match ($this->metric) {
-            Metric::Ccn2, Metric::Lines, Metric::Params => null,
+            Metric::Ccn2, Metric::Lines, Metric::Params, Metric::MethodName, Metric::VariableName => null,
             Metric::Methods => $class->declaredMethods($this->ignoringAccessors),
             Metric::Properties => $class->properties,
             Metric::Inheritance => $class->inheritance,
             Metric::ClassLines => $class->classLines,
+            Metric::ClassName => $class->className,
         };
     }
 
