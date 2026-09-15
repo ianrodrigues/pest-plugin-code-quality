@@ -18,6 +18,9 @@ namespace Pest {
      * @method \Pest\Arch\Contracts\ArchExpectation toHavePropertiesAtMost(int $max, bool $allowEmpty = false)
      * @method \Pest\Arch\Contracts\ArchExpectation toHaveInheritanceDepthAtMost(int $max, bool $allowEmpty = false)
      * @method \Pest\Arch\Contracts\ArchExpectation toHaveClassLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveClassNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveVariableNamesAtMost(int $max, bool $allowEmpty = false)
      */
     class Expectation
     {
@@ -34,6 +37,9 @@ namespace Pest\Arch {
      * @method \Pest\Arch\Contracts\ArchExpectation toHavePropertiesAtMost(int $max, bool $allowEmpty = false)
      * @method \Pest\Arch\Contracts\ArchExpectation toHaveInheritanceDepthAtMost(int $max, bool $allowEmpty = false)
      * @method \Pest\Arch\Contracts\ArchExpectation toHaveClassLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveClassNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveMethodNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method \Pest\Arch\Contracts\ArchExpectation toHaveVariableNamesAtMost(int $max, bool $allowEmpty = false)
      */
     class PendingArchExpectation
     {
@@ -50,6 +56,9 @@ namespace Pest\Arch\Contracts {
      * @method ArchExpectation toHavePropertiesAtMost(int $max, bool $allowEmpty = false)
      * @method ArchExpectation toHaveInheritanceDepthAtMost(int $max, bool $allowEmpty = false)
      * @method ArchExpectation toHaveClassLinesAtMost(int $max, bool $allowEmpty = false)
+     * @method ArchExpectation toHaveClassNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method ArchExpectation toHaveMethodNamesAtMost(int $max, bool $allowEmpty = false)
+     * @method ArchExpectation toHaveVariableNamesAtMost(int $max, bool $allowEmpty = false)
      */
     interface ArchExpectation
     {
