@@ -472,3 +472,34 @@ it('reads the baseline configured in tests/Pest.php, and lets the command line o
         ->and($overridden['exitCode'])->not->toBe(0)
         ->and($overridden['output'])->toContain('Accepted: 11');
 });
+
+it('carries a class symbol through generate, then fails once the class grows', function (): void {
+    adoption_class('Legacy', ['handle' => 1, 'process' => 1, 'report' => 1]);
+    adoption_write('tests/PolicyTest.php', implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        "arch('legacy stays narrow')",
+        "    ->expect('Fixture\\App')",
+        '    ->classes()',
+        '    ->toHaveMethodsAtMost(2);',
+        '',
+    ]));
+
+    adoption_run(['--quality-baseline-generate']);
+
+    expect(adoption_accepted())->toBe(['Fixture\App\Legacy' => 3])
+        ->and(adoption_run()['exitCode'])->toBe(0);
+
+    adoption_class('Legacy', ['handle' => 1, 'process' => 1, 'report' => 1, 'archive' => 1]);
+
+    $result = adoption_run();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])
+        ->toContain('Fixture\App\Legacy')
+        ->toContain('Class methods (methods v1): 4')
+        ->toContain('Accepted: 3')
+        ->toContain('1 class exceeds the limit');
+});
