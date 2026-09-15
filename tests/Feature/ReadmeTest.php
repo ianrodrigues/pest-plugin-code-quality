@@ -52,6 +52,24 @@ function readme_metric_class(string $class, string $body): void
     ]));
 }
 
+/**
+ * A class-level sample is a whole declaration, so it is written as the
+ * file, not wrapped in one the way a method sample is.
+ */
+function readme_metric_source(string $class, string $body): void
+{
+    ReadmeProject::write("app/Support/{$class}.php", implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        'namespace App\Support;',
+        '',
+        $body,
+        '',
+    ]));
+}
+
 function readme_metric_policy(string $target, string $method, int $limit): void
 {
     ReadmeProject::writeTest(implode("\n", [
@@ -216,4 +234,59 @@ it('measures the params worked example at the count the README gives it', functi
 
     expect($result['exitCode'])->not->toBe(0)
         ->and($result['output'])->toContain('Method parameters (params v1): 4');
+});
+
+it('measures the methods worked example at the tally the README gives it', function (): void {
+    readme_metric_source('MethodsExample', ReadmeProject::block('methods-worked-example'));
+    readme_metric_policy('App\Support\MethodsExample', 'toHaveMethodsAtMost', 3);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Class methods (methods v1): 4');
+});
+
+it('drops the accessors of that same example when asked to ignore them', function (): void {
+    readme_metric_source('MethodsExample', ReadmeProject::block('methods-worked-example'));
+    ReadmeProject::writeTest(implode("\n", [
+        "arch('the worked example stays within its documented value')",
+        "    ->expect('App\Support\MethodsExample')",
+        '    ->classes()',
+        '    ->toHaveMethodsAtMost(1, ignoringAccessors: true);',
+    ]));
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Class methods (methods v1): 2');
+});
+
+it('measures the properties worked example at the count the README gives it', function (): void {
+    readme_metric_source('PropertiesExample', ReadmeProject::block('properties-worked-example'));
+    readme_metric_policy('App\Support\PropertiesExample', 'toHavePropertiesAtMost', 3);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Class properties (properties v1): 4');
+});
+
+it('measures the inheritance worked example at the depth the README gives it', function (): void {
+    readme_metric_source('InheritanceExample', ReadmeProject::block('inheritance-worked-example'));
+    readme_metric_policy('App\Support\InheritanceExample', 'toHaveInheritanceDepthAtMost', 1);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Inheritance depth (inheritance v1): 2');
+});
+
+it('measures the class lines worked example at the count the README gives it', function (): void {
+    readme_metric_source('ClassLinesExample', ReadmeProject::block('class-lines-worked-example'));
+    readme_metric_policy('App\Support\ClassLinesExample', 'toHaveClassLinesAtMost', 2);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Class lines (classLines v1): 3');
 });

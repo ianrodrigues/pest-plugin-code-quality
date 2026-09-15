@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `toHaveMethodsAtMost()`, `toHavePropertiesAtMost()`, `toHaveInheritanceDepthAtMost()` and `toHaveClassLinesAtMost()`, measuring `methods` v1, `properties` v1, `inheritance` v1 and `classLines` v1 on every class, interface, trait and enum a target selects. `toHaveMethodsAtMost()` takes `ignoringAccessors: true` to drop plain getters and setters from the count.
+- Class symbols (`App\Foo`) in failure messages, `--quality-inspect`, the JSON report and the baseline, alongside the method symbols (`App\Foo::bar`) already carried. `schema/quality-report.v1.json` gains a class measurement row and a `classesMeasured` coverage count, both optional, and neither schema changes version.
 ### Fixed
 
 - A file that declares no class, interface, trait or enum (a functions file, a config file returning an array) is no longer reported under "files were found but not analysed"; it counts in `filesFound` and in the new `withoutClasses` coverage count instead.
