@@ -38,6 +38,14 @@ final readonly class ClassDeclaration
         return $this->node instanceof Class_;
     }
 
+    /** The declaration's own name, without its namespace. */
+    public function shortName(): string
+    {
+        $separator = strrpos($this->symbol, '\\');
+
+        return $separator === false ? $this->symbol : substr($this->symbol, $separator + 1);
+    }
+
     /** The resolved name of the extended class, if the declaration extends one. */
     public function parent(): ?string
     {

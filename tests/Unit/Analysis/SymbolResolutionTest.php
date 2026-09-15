@@ -5,7 +5,7 @@ declare(strict_types=1);
 use IanRodrigues\CodeQuality\Analysis\AstMeasurer;
 
 /**
- * @return array<string, array{int|null, int|null, int}>
+ * @return array<string, array{int|null, int|null, int, int, int}>
  */
 function measureSource(string $source): array
 {
@@ -98,7 +98,7 @@ it('resolves the constructor symbol and counts promoted parameters', function ()
         PHP);
 
     expect($result)->toHaveKey('Symbols\\Point::__construct')
-        ->and($result['Symbols\\Point::__construct'])->toBe([1, 0, 2]);
+        ->and($result['Symbols\\Point::__construct'])->toBe([1, 0, 2, 11, 1]);
 });
 
 it('resolves magic method symbols', function (): void {

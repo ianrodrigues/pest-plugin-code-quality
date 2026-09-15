@@ -36,9 +36,9 @@ use PhpParser\Node\Stmt\While_;
 use PhpParser\NodeVisitorAbstract;
 
 /**
- * A construct inside a closure, arrow function, or anonymous class body
- * counts toward the innermost enclosing method's `ccn2`; none of these
- * start a `ccn2` context of their own.
+ * A construct or declared variable inside a closure, arrow function, or anonymous
+ * class body counts toward the innermost enclosing method; anonymous-class methods
+ * start their own context, like any method.
  */
 final class MetricsVisitor extends NodeVisitorAbstract
 {
@@ -81,14 +81,16 @@ final class MetricsVisitor extends NodeVisitorAbstract
             return null;
         }
 
+        $current = $this->methodStack[array_key_last($this->methodStack)];
+
+        foreach (DeclaredVariableNames::at($node) as $name) {
+            $current->recordVariable($name);
+        }
+
         $delta = $this->ccn2Delta($node);
 
-        if ($delta > 0) {
-            $current = $this->methodStack[array_key_last($this->methodStack)];
-
-            if ($current->ccn2 !== null) {
-                $current->ccn2 += $delta;
-            }
+        if ($delta > 0 && $current->ccn2 !== null) {
+            $current->ccn2 += $delta;
         }
 
         return null;
@@ -179,13 +181,13 @@ final class MetricsVisitor extends NodeVisitorAbstract
             : null;
 
         return new MethodMeasurements(
-            symbol: $accumulator->symbol,
-            path: $this->path,
-            line: $accumulator->line,
-            endLine: $accumulator->endLine,
+            location: new SymbolLocation($accumulator->symbol, $this->path, $accumulator->line, $accumulator->endLine),
             ccn2: $accumulator->ccn2,
             lines: $lines,
             params: $accumulator->params,
+            methodName: mb_strlen($node->name->toString()),
+            variableName: $accumulator->variableName,
+            longestVariableIdentifier: $accumulator->longestVariableIdentifier,
         );
     }
 
@@ -195,15 +197,13 @@ final class MetricsVisitor extends NodeVisitorAbstract
     private function finishClass(ClassDeclaration $class, array $parents): ClassMeasurements
     {
         return new ClassMeasurements(
-            symbol: $class->symbol,
-            path: $this->path,
-            line: $class->line(),
-            endLine: $class->endLine(),
+            location: new SymbolLocation($class->symbol, $this->path, $class->line(), $class->endLine()),
             methods: $class->methods(),
             accessors: $class->accessors(),
             properties: $class->properties(),
             inheritance: $class->isClass() ? InheritanceDepth::of($class->symbol, $parents) : null,
             classLines: $this->tokens->countBodyLines($class->endFilePos()),
+            className: mb_strlen($class->shortName()),
         );
     }
 
