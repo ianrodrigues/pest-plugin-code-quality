@@ -265,6 +265,8 @@ Quality: 3 files were found but not analysed (run with --quality-inspect for det
 
 `IanRodrigues\CodeQuality\Config::strict(true)` turns skipped files into an error (`IanRodrigues\CodeQuality\Selection\SkippedFilesFound`) instead of a warning. It is a static, resettable switch — call `Config::reset()` to return to warning. There is no CLI flag for it yet.
 
+A file that declares no class, interface, trait or enum — a functions file, a config file returning an array — is not a skip either: there is nothing to measure, so it counts in `filesFound` only, shown by `--quality-inspect` as `Files without classes: N`.
+
 ### Vendor code cannot be analysed
 
 A target that resolves entirely under `vendor/` errors with `IanRodrigues\CodeQuality\Selection\VendorTarget`: Pest's architecture layer never produces an AST for vendor code, so there is nothing to measure there — `allowEmpty` does not apply, because the problem is not an empty result, it is an impossible one.
