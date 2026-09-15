@@ -50,3 +50,19 @@ it('falls back when no test is running', function (): void {
     expect(PolicyIdentity::for(['App'], Policy::complexity(10), 'unknown'))
         ->toBe('[App] :: toHaveMethodComplexityAtMost');
 });
+
+it('gives a written description a different identity with ignoringAccessors than without', function (): void {
+    $withFlag = PolicyIdentity::for(['App'], Policy::methods(5, ignoringAccessors: true), 'small classes');
+    $withoutFlag = PolicyIdentity::for(['App'], Policy::methods(5), 'small classes');
+
+    expect($withFlag)->not->toBe($withoutFlag)
+        ->and($withoutFlag)->toBe('small classes :: methods');
+});
+
+it('gives a target-based identity a different identity with ignoringAccessors than without', function (): void {
+    $withFlag = PolicyIdentity::for(['App\Models'], Policy::methods(5, ignoringAccessors: true), '');
+    $withoutFlag = PolicyIdentity::for(['App\Models'], Policy::methods(5), '');
+
+    expect($withFlag)->not->toBe($withoutFlag)
+        ->and($withoutFlag)->toBe('[App\Models] :: toHaveMethodsAtMost');
+});
