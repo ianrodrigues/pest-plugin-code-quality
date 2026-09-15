@@ -10,8 +10,8 @@ final readonly class Violation
 {
     /**
      * `$path` is relative to the project root with forward slashes,
-     * `$line` is the method declaration's line, and `$accepted` is the
-     * ceiling a baseline entry raised, when one applied to this symbol.
+     * `$line` is the method or class-like declaration line, and
+     * `$accepted` is the ceiling a baseline entry raised, if one applied.
      */
     public function __construct(
         public string $symbol,
