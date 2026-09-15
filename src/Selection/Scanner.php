@@ -164,7 +164,7 @@ final readonly class Scanner
                 fn (): FileMeasurements => $this->measurer->measureAst($path, $stmts),
             );
 
-            foreach ($measurements as $method) {
+            foreach ($measurements->methods() as $method) {
                 if ($method->isAnonymous()) {
                     continue;
                 }

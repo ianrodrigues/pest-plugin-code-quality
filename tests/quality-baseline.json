@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-09-15T00:15:19Z",
+    "generatedAt": "2026-09-15T00:14:44Z",
     "pluginVersion": "0.1.0",
     "entries": [
         {
@@ -13,17 +13,6 @@
             "limit": 10,
             "accepted": 15,
             "path": "src/Baseline/BaselineFile.php"
-        },
-        {
-            "policy": "the package keeps its own methods simple :: ccn2",
-            "symbol": "IanRodrigues\\CodeQuality\\Baseline\\BaselineUpdater::measured",
-            "metric": {
-                "name": "ccn2",
-                "version": 1
-            },
-            "limit": 10,
-            "accepted": 11,
-            "path": "src/Baseline/BaselineUpdater.php"
         },
         {
             "policy": "the package keeps its own methods simple :: ccn2",
@@ -46,6 +35,28 @@
             "limit": 10,
             "accepted": 16,
             "path": "src/Selection/Plugins/OutputPlugin.php"
+        },
+        {
+            "policy": "the package keeps its own methods simple :: ccn2",
+            "symbol": "IanRodrigues\\CodeQuality\\Selection\\Scanner::declaredNamespace",
+            "metric": {
+                "name": "ccn2",
+                "version": 1
+            },
+            "limit": 10,
+            "accepted": 12,
+            "path": "src/Selection/Scanner.php"
+        },
+        {
+            "policy": "the package keeps its own parameter lists small :: params",
+            "symbol": "IanRodrigues\\CodeQuality\\Analysis\\ClassMeasurements::__construct",
+            "metric": {
+                "name": "params",
+                "version": 1
+            },
+            "limit": 4,
+            "accepted": 9,
+            "path": "src/Analysis/ClassMeasurements.php"
         },
         {
             "policy": "the package keeps its own parameter lists small :: params",
@@ -143,7 +154,7 @@
                 "version": 1
             },
             "limit": 4,
-            "accepted": 8,
+            "accepted": 7,
             "path": "src/Selection/TargetCoverage.php"
         }
     ]
