@@ -30,13 +30,15 @@ final class PolicyIdentity
      */
     public static function for(array $targets, Policy $policy, string $description): string
     {
+        $discriminator = $policy->ignoringAccessors ? self::SEPARATOR.'ignoringAccessors' : '';
+
         if (self::isWritten($description, $policy)) {
-            return $description.self::SEPARATOR.$policy->metric->value;
+            return $description.self::SEPARATOR.$policy->metric->value.$discriminator;
         }
 
         sort($targets);
 
-        return '['.implode(', ', $targets).']'.self::SEPARATOR.$policy->expectation;
+        return '['.implode(', ', $targets).']'.self::SEPARATOR.$policy->expectation.$discriminator;
     }
 
     /**

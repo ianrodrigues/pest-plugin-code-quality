@@ -503,3 +503,86 @@ it('carries a class symbol through generate, then fails once the class grows', f
         ->toContain('Accepted: 3')
         ->toContain('1 class exceeds the limit');
 });
+
+it('keeps two methods policies on the same target and description apart when only one ignores accessors', function (): void {
+    adoption_write('app/Widget.php', implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        'namespace Fixture\App;',
+        '',
+        'final class Widget',
+        '{',
+        '    public function __construct(private int $size) {}',
+        '',
+        '    public function size(): int',
+        '    {',
+        '        return $this->size;',
+        '    }',
+        '',
+        '    public function grow(int $by): self',
+        '    {',
+        '        $this->size = $this->size + $by;',
+        '',
+        '        return $this;',
+        '    }',
+        '',
+        '    public function describe(): string',
+        '    {',
+        '        return \'size \'.$this->size;',
+        '    }',
+        '}',
+        '',
+    ]));
+
+    adoption_write('tests/MethodsIgnoringTest.php', implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        "arch('methods stay put')",
+        "    ->expect('Fixture\\App')",
+        '    ->classes()',
+        '    ->toHaveMethodsAtMost(1, ignoringAccessors: true);',
+        '',
+    ]));
+
+    adoption_write('tests/MethodsDefaultTest.php', implode("\n", [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        "arch('methods stay put')",
+        "    ->expect('Fixture\\App')",
+        '    ->classes()',
+        '    ->toHaveMethodsAtMost(3);',
+        '',
+    ]));
+
+    $generate = adoption_run(['--quality-baseline-generate']);
+
+    expect($generate['output'])
+        ->toContain('Quality baseline written')
+        ->not->toContain('DuplicatePolicyIdentity')
+        ->not->toContain('same identity');
+
+    $entries = adoption_written_baseline()['entries'];
+
+    assert(is_array($entries));
+
+    $accepted = [];
+
+    foreach ($entries as $entry) {
+        assert(is_array($entry) && is_string($entry['policy']) && is_int($entry['accepted']));
+
+        $accepted[$entry['policy']] = $entry['accepted'];
+    }
+
+    ksort($accepted);
+
+    expect($accepted)->toBe([
+        'methods stay put :: methods' => 4,
+        'methods stay put :: methods :: ignoringAccessors' => 2,
+    ])->and(adoption_run()['exitCode'])->toBe(0);
+});
