@@ -10,7 +10,7 @@ use Pest\Arch\Contracts\ArchExpectation;
 use Pest\Expectation;
 use Pest\Plugin;
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 // Composer's `files` entries load in no guaranteed order, so `expect()`
 // may not exist yet; Pest runs `Plugin::$callables` after boot instead.

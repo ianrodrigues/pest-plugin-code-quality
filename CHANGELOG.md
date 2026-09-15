@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.3.0] - 2026-09-15
+
 ### Added
 
 - A `Counted:` block at the end of a `ccn2`, `methods`, `properties` or `inheritance` failure, listing what produced the value: the counted constructs grouped by kind with the line of each occurrence, the declared methods or properties with their lines, or the parents nearest first. Every violation in the JSON report carries the same items as `contributions[]`; `schema/quality-report.v1.json` gains the field as optional and keeps its version.
@@ -43,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Config::strict()` has no CLI flag yet.
 - Requires PHP ^8.4 and Pest ^5.0; the Pest architecture plugin is pinned to `~5.0.0` rather than `^5.0`, since this package reaches into that plugin's internals to add its own expectations to the chain.
 
-[Unreleased]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ianrodrigues/pest-plugin-code-quality/releases/tag/v0.1.0

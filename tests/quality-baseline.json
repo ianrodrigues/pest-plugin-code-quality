@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
-    "generatedAt": "2026-09-15T11:09:51Z",
-    "pluginVersion": "0.2.0",
+    "generatedAt": "2026-09-15T11:36:42Z",
+    "pluginVersion": "0.3.0",
     "entries": [
         {
             "policy": "the package keeps its own methods simple :: ccn2",
