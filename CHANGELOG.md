@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.2.0] - 2026-09-15
+
 ### Added
 
 - `toHaveMethodsAtMost()`, `toHavePropertiesAtMost()`, `toHaveInheritanceDepthAtMost()` and `toHaveClassLinesAtMost()`, measuring `methods` v1, `properties` v1, `inheritance` v1 and `classLines` v1 on every class, interface, trait and enum a target selects. `toHaveMethodsAtMost()` takes `ignoringAccessors: true` to drop plain getters and setters from the count.
@@ -37,5 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Config::strict()` has no CLI flag yet.
 - Requires PHP ^8.4 and Pest ^5.0; the Pest architecture plugin is pinned to `~5.0.0` rather than `^5.0`, since this package reaches into that plugin's internals to add its own expectations to the chain.
 
-[Unreleased]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ianrodrigues/pest-plugin-code-quality/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ianrodrigues/pest-plugin-code-quality/releases/tag/v0.1.0
