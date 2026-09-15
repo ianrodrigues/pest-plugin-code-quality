@@ -6,6 +6,7 @@ use IanRodrigues\CodeQuality\Analysis\AstMeasurer;
 use IanRodrigues\CodeQuality\Analysis\FileMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MeasurementCache;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
+use IanRodrigues\CodeQuality\Analysis\Support\SymbolLocation;
 use IanRodrigues\CodeQuality\Tests\Support\CountingParser;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeTraverser;
@@ -123,8 +124,8 @@ it('gives measureAst the same result as measure for the same file', function ():
 
 it('exposes methods by symbol and counts them on FileMeasurements', function (): void {
     $measurements = new FileMeasurements('irrelevant.php', [
-        new MethodMeasurements('A::a', 'irrelevant.php', 1, 3, 1, 1, 0),
-        new MethodMeasurements('A::b', 'irrelevant.php', 5, 7, 1, 1, 0),
+        new MethodMeasurements(new SymbolLocation('A::a', 'irrelevant.php', 1, 3), 1, 1, 0, 1, 0, null),
+        new MethodMeasurements(new SymbolLocation('A::b', 'irrelevant.php', 5, 7), 1, 1, 0, 1, 0, null),
     ]);
 
     expect($measurements)->toHaveCount(2)

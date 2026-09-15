@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Analysis;
 
+use IanRodrigues\CodeQuality\Analysis\Support\SymbolLocation;
+
 /**
  * `inheritance` is `null` for an interface, a trait, or an enum, since
  * none of those extend a class. `accessors` is the share of `methods`
@@ -11,17 +13,27 @@ namespace IanRodrigues\CodeQuality\Analysis;
  */
 final readonly class ClassMeasurements
 {
+    public string $symbol;
+
+    public string $path;
+
+    public int $line;
+
+    public int $endLine;
+
     public function __construct(
-        public string $symbol,
-        public string $path,
-        public int $line,
-        public int $endLine,
+        SymbolLocation $location,
         public int $methods,
         public int $accessors,
         public int $properties,
         public ?int $inheritance,
         public int $classLines,
+        public int $className,
     ) {
+        $this->symbol = $location->symbol;
+        $this->path = $location->path;
+        $this->line = $location->line;
+        $this->endLine = $location->endLine;
     }
 
     /**
@@ -39,7 +51,7 @@ final readonly class ClassMeasurements
     }
 
     /**
-     * @return array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int}
+     * @return array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int, className: int}
      */
     public function toArray(): array
     {
@@ -49,6 +61,7 @@ final readonly class ClassMeasurements
             'properties' => $this->properties,
             'inheritance' => $this->inheritance,
             'classLines' => $this->classLines,
+            'className' => $this->className,
         ];
     }
 }

@@ -12,10 +12,10 @@ interface Measurer
 {
     /**
      * Maps each `Fully\Qualified\Class::method` symbol to its
-     * `[ccn2, lines, params]` values; `null` means the metric does not
-     * apply, as `ccn2`/`lines` do not on an abstract or interface method.
+     * `[ccn2, lines, params, methodName, variableName]` values; `null` means the metric
+     * does not apply, as `ccn2`/`lines` do not on an abstract or interface method.
      *
-     * @return array<string, array{int|null, int|null, int}>
+     * @return array<string, array{int|null, int|null, int, int, int}>
      */
     public function measure(string $path): array;
 
@@ -24,7 +24,7 @@ interface Measurer
      * `inheritance` is `null` only for an interface, a trait or an enum; a
      * class with no parent measures `0`, not `null`.
      *
-     * @return array<string, array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int}>
+     * @return array<string, array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int, className: int}>
      */
     public function measureClasses(string $path): array;
 }
