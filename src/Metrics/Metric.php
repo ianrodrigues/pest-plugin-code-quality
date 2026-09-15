@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Metrics;
 
 /**
- * A metric this package measures, per method (`ccn2`, `lines`, `params`)
- * or class-like declaration (`methods`, `properties`, `inheritance`,
- * `classLines`); `version()` bumps to mark baselines stale instead of reinterpreting them silently.
+ * A metric this package measures, per method (`ccn2`, `lines`, `params`, `methodName`, `variableName`)
+ * or class-like declaration (`methods`, `properties`, `inheritance`, `classLines`, `className`);
+ * `version()` bumps to mark baselines stale instead of reinterpreting them silently.
  */
 enum Metric: string
 {
@@ -18,6 +18,9 @@ enum Metric: string
     case Properties = 'properties';
     case Inheritance = 'inheritance';
     case ClassLines = 'classLines';
+    case ClassName = 'className';
+    case MethodName = 'methodName';
+    case VariableName = 'variableName';
 
     public function version(): int
     {
@@ -29,14 +32,17 @@ enum Metric: string
             self::Properties => 1,
             self::Inheritance => 1,
             self::ClassLines => 1,
+            self::ClassName => 1,
+            self::MethodName => 1,
+            self::VariableName => 1,
         };
     }
 
     public function scope(): Scope
     {
         return match ($this) {
-            self::Ccn2, self::Lines, self::Params => Scope::Method,
-            self::Methods, self::Properties, self::Inheritance, self::ClassLines => Scope::ClassLike,
+            self::Ccn2, self::Lines, self::Params, self::MethodName, self::VariableName => Scope::Method,
+            self::Methods, self::Properties, self::Inheritance, self::ClassLines, self::ClassName => Scope::ClassLike,
         };
     }
 
@@ -50,6 +56,9 @@ enum Metric: string
             self::Properties => 'Class properties',
             self::Inheritance => 'Inheritance depth',
             self::ClassLines => 'Class lines',
+            self::ClassName => 'Class name length',
+            self::MethodName => 'Method name length',
+            self::VariableName => 'Variable name length',
         };
     }
 
@@ -63,6 +72,9 @@ enum Metric: string
             self::Properties => 'toHavePropertiesAtMost',
             self::Inheritance => 'toHaveInheritanceDepthAtMost',
             self::ClassLines => 'toHaveClassLinesAtMost',
+            self::ClassName => 'toHaveClassNamesAtMost',
+            self::MethodName => 'toHaveMethodNamesAtMost',
+            self::VariableName => 'toHaveVariableNamesAtMost',
         };
     }
 
