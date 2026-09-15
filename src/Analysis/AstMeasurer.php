@@ -34,12 +34,27 @@ final readonly class AstMeasurer implements Measurer
     {
         $result = [];
 
-        foreach ($this->measureFile($path) as $method) {
+        foreach ($this->measureFile($path)->methods() as $method) {
             if ($method->isAnonymous()) {
                 continue;
             }
 
             $result[$method->symbol] = $method->toArray();
+        }
+
+        return $result;
+    }
+
+    public function measureClasses(string $path): array
+    {
+        $result = [];
+
+        foreach ($this->measureFile($path)->classes() as $class) {
+            if ($class->isAnonymous()) {
+                continue;
+            }
+
+            $result[$class->symbol] = $class->toArray();
         }
 
         return $result;
@@ -61,7 +76,7 @@ final readonly class AstMeasurer implements Measurer
         $traverser->addVisitor($visitor);
         $traverser->traverse($stmts);
 
-        return new FileMeasurements($path, $visitor->methods());
+        return new FileMeasurements($path, $visitor->methods(), $visitor->classes());
     }
 
     private function measureFile(string $path): FileMeasurements

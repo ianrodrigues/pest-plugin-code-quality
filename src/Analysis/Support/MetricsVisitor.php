@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Analysis\Support;
 
+use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use LogicException;
 use PhpParser\Node;
@@ -53,6 +54,9 @@ final class MetricsVisitor extends NodeVisitorAbstract
     /** @var list<MethodMeasurements> */
     private array $methods = [];
 
+    /** @var list<ClassDeclaration> */
+    private array $classes = [];
+
     public function __construct(
         private readonly string $path,
         private readonly SourceTokens $tokens,
@@ -62,7 +66,10 @@ final class MetricsVisitor extends NodeVisitorAbstract
     public function enterNode(Node $node): null
     {
         if ($node instanceof ClassLike) {
-            $this->classLikeStack[] = $this->classLikeSymbol($node);
+            $symbol = $this->classLikeSymbol($node);
+
+            $this->classLikeStack[] = $symbol;
+            $this->classes[] = new ClassDeclaration($symbol, $node);
 
             return null;
         }
@@ -113,6 +120,26 @@ final class MetricsVisitor extends NodeVisitorAbstract
         return $this->methods;
     }
 
+    /**
+     * Resolved once the traversal is over, so that a parent declared
+     * further down the same file still counts towards `inheritance`.
+     *
+     * @return list<ClassMeasurements>
+     */
+    public function classes(): array
+    {
+        $parents = [];
+
+        foreach ($this->classes as $class) {
+            $parents[$class->symbol] = $class->parent();
+        }
+
+        return array_map(
+            fn (ClassDeclaration $class): ClassMeasurements => $this->finishClass($class, $parents),
+            $this->classes,
+        );
+    }
+
     private function classLikeSymbol(ClassLike $node): string
     {
         if ($node instanceof Class_ && !$node->name instanceof Identifier) {
@@ -151,7 +178,7 @@ final class MetricsVisitor extends NodeVisitorAbstract
             ?? throw new LogicException('Left a method that was never entered.');
 
         $lines = $accumulator->hasBody
-            ? $this->tokens->countBodyLines($this->filePos($node, 'endFilePos'))
+            ? $this->tokens->countBodyLines(FilePosition::of($node, 'endFilePos'))
             : null;
 
         return new MethodMeasurements(
@@ -165,15 +192,22 @@ final class MetricsVisitor extends NodeVisitorAbstract
         );
     }
 
-    private function filePos(Node $node, string $attribute): int
+    /**
+     * @param array<string, string|null> $parents
+     */
+    private function finishClass(ClassDeclaration $class, array $parents): ClassMeasurements
     {
-        $value = $node->getAttribute($attribute);
-
-        if (! is_int($value)) {
-            throw new LogicException("Node is missing its \"{$attribute}\" attribute.");
-        }
-
-        return $value;
+        return new ClassMeasurements(
+            symbol: $class->symbol,
+            path: $this->path,
+            line: $class->line(),
+            endLine: $class->endLine(),
+            methods: $class->methods(),
+            accessors: $class->accessors(),
+            properties: $class->properties(),
+            inheritance: $class->isClass() ? InheritanceDepth::of($class->symbol, $parents) : null,
+            classLines: $this->tokens->countBodyLines($class->endFilePos()),
+        );
     }
 
     private function ccn2Delta(Node $node): int

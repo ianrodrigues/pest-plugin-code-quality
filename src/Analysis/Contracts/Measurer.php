@@ -19,4 +19,13 @@ interface Measurer
      * @return array<string, array{int|null, int|null, int}>
      */
     public function measure(string $path): array;
+
+    /**
+     * Maps each `Fully\Qualified\Class` symbol to its class-level values.
+     * `inheritance` is `null` for a declaration that extends no class: an
+     * interface, a trait or an enum.
+     *
+     * @return array<string, array{methods: int, accessors: int, properties: int, inheritance: int|null, classLines: int}>
+     */
+    public function measureClasses(string $path): array;
 }
