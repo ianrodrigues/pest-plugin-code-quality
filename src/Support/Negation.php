@@ -11,9 +11,8 @@ final class Negation
 {
     /**
      * `OppositeExpectation` forwards to `Expectation` without consulting
-     * extensions, so the call stack is the only signal; matching the frame
-     * pair (not just any `OppositeExpectation` frame) avoids misreading an
-     * unrelated outer negation as a negated limit.
+     * extensions, so the call stack is the only signal; matching the exact
+     * frame pair avoids misreading an unrelated outer negation as this one.
      */
     public static function isActive(): bool
     {
