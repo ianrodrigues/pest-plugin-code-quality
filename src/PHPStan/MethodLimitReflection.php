@@ -50,13 +50,32 @@ final readonly class MethodLimitReflection implements MethodReflection
             new FunctionVariant(
                 TemplateTypeMap::createEmpty(),
                 null,
-                [
-                    new MethodLimitParameter('max', new IntegerType(), false),
-                    new MethodLimitParameter('allowEmpty', new BooleanType(), true, new ConstantBooleanType(false)),
-                ],
+                $this->parameters(),
                 false,
                 new ObjectType(ArchExpectation::class),
             ),
+        ];
+    }
+
+    /**
+     * `toHaveMethodsAtMost()` takes its own optional flag between the two
+     * every expectation shares.
+     *
+     * @return list<MethodLimitParameter>
+     */
+    private function parameters(): array
+    {
+        $max = new MethodLimitParameter('max', new IntegerType(), false);
+        $allowEmpty = new MethodLimitParameter('allowEmpty', new BooleanType(), true, new ConstantBooleanType(false));
+
+        if ($this->name !== 'toHaveMethodsAtMost') {
+            return [$max, $allowEmpty];
+        }
+
+        return [
+            $max,
+            new MethodLimitParameter('ignoringAccessors', new BooleanType(), true, new ConstantBooleanType(false)),
+            $allowEmpty,
         ];
     }
 
