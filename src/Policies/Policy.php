@@ -48,6 +48,7 @@ final readonly class Policy
             Metric::Ccn2 => $method->ccn2,
             Metric::Lines => $method->lines,
             Metric::Params => $method->params,
+            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
         };
     }
 

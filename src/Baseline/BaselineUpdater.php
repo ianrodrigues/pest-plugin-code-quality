@@ -71,6 +71,21 @@ final class BaselineUpdater
     }
 
     /**
+     * Null when the metric does not apply to the measured symbol.
+     *
+     * @param array{ccn2: int|null, lines: int|null, params: int} $measurement
+     */
+    private static function valueOf(Metric $metric, array $measurement): ?int
+    {
+        return match ($metric) {
+            Metric::Ccn2 => $measurement['ccn2'],
+            Metric::Lines => $measurement['lines'],
+            Metric::Params => $measurement['params'],
+            Metric::Methods, Metric::Properties, Metric::Inheritance, Metric::ClassLines => null,
+        };
+    }
+
+    /**
      * @param list<PolicyEntry> $entries
      * @return list<MeasuredPolicy>
      */
@@ -85,11 +100,7 @@ final class BaselineUpdater
             $first[$policy] ??= $entry;
 
             foreach ($entry['measurements'] as $measurement) {
-                $value = match (Metric::from($entry['metric']['name'])) {
-                    Metric::Ccn2 => $measurement['ccn2'],
-                    Metric::Lines => $measurement['lines'],
-                    Metric::Params => $measurement['params'],
-                };
+                $value = self::valueOf(Metric::from($entry['metric']['name']), $measurement);
 
                 if ($value === null) {
                     continue;
