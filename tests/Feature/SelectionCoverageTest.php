@@ -167,3 +167,34 @@ it('errors instead of warning once strict mode is on', function (): void {
     expect(fn (): PolicyResult => $runner->run(Policy::complexity(99), $targets, $options))
         ->toThrow(SkippedFilesFound::class, 'Broken.php');
 });
+
+it('counts a functions file as found without treating it as skipped, and does not warn', function (): void {
+    [$runner, $targets, $options] = selection_runner_for(FIXTURE_APP.'\FunctionsOnly');
+
+    $result = $runner->run(Policy::complexity(99), $targets, $options);
+
+    expect($result->passed())->toBeTrue();
+
+    $coverage = coverage_of($result)->targets[0];
+
+    expect($coverage->filesFound)->toBe(2)
+        ->and($coverage->withoutClasses)->toBe(1)
+        ->and($coverage->objectsWithAst)->toBe(1)
+        ->and($coverage->eligibleMethods)->toBe(1)
+        ->and($coverage->skipped)->toBeEmpty()
+        ->and(coverage_of($result)->skippedFiles())->toBeEmpty()
+        ->and(WarningsCollector::all())->toBeEmpty();
+});
+
+it('classifies a genuinely unparsable file as no ast, not as a file without classes', function (): void {
+    [$runner, $targets, $options] = selection_runner_for(FIXTURE_APP.'\Broken');
+
+    $result = $runner->run(Policy::complexity(99, allowEmpty: true), $targets, $options);
+
+    $coverage = coverage_of($result)->targets[0];
+
+    expect($coverage->skipped)->toHaveCount(1)
+        ->and($coverage->skipped[0]->path)->toBe('tests/Fixtures/App/Broken/SyntaxError.php')
+        ->and($coverage->skipped[0]->reason)->toBe(SkipReason::NoAst)
+        ->and($coverage->withoutClasses)->toBe(0);
+});
