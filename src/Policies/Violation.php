@@ -9,10 +9,9 @@ use IanRodrigues\CodeQuality\Metrics\Metric;
 final readonly class Violation
 {
     /**
-     * `$path` is relative to the project root with forward slashes, and
-     * `$line` is the method declaration's line. `$accepted` is the value a
-     * baseline entry raised the ceiling to, when one applied to this
-     * symbol.
+     * `$path` is relative to the project root with forward slashes,
+     * `$line` is the method declaration's line, and `$accepted` is the
+     * ceiling a baseline entry raised, when one applied to this symbol.
      */
     public function __construct(
         public string $symbol,
