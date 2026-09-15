@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml/badge.svg)](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml)
 
-A third-party [Pest](https://pestphp.com) plugin, that adds method-level maintainability limits — cyclomatic complexity, body line count, and parameter count — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
+A third-party [Pest](https://pestphp.com) plugin, that adds maintainability limits — per method, cyclomatic complexity, body line count and parameter count; per class, declared methods, declared properties, inheritance depth and body line count — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
 
 ## Requirements
 
@@ -21,13 +21,17 @@ On a Laravel application that still lists `phpunit/phpunit` in `require-dev` (th
 
 ## Quick start
 
-Three expectations join Pest's `arch()` chain, each taking an inclusive limit — `AtMost(10)` passes a method that measures exactly 10:
+Seven expectations join Pest's `arch()` chain, each taking an inclusive limit — `AtMost(10)` passes a symbol that measures exactly 10:
 
-| Expectation | Metric |
-|---|---|
-| `toHaveMethodComplexityAtMost(int $max)` | `ccn2` |
-| `toHaveMethodLinesAtMost(int $max)` | `lines` |
-| `toHaveMethodParametersAtMost(int $max)` | `params` |
+| Expectation | Metric | Measured per |
+|---|---|---|
+| `toHaveMethodComplexityAtMost(int $max)` | `ccn2` | method |
+| `toHaveMethodLinesAtMost(int $max)` | `lines` | method |
+| `toHaveMethodParametersAtMost(int $max)` | `params` | method |
+| `toHaveMethodsAtMost(int $max)` | `methods` | class |
+| `toHavePropertiesAtMost(int $max)` | `properties` | class |
+| `toHaveInheritanceDepthAtMost(int $max)` | `inheritance` | class |
+| `toHaveClassLinesAtMost(int $max)` | `classLines` | class |
 
 A policy for controllers, and a separate complexity budget for a parsing layer:
 
@@ -64,10 +68,27 @@ The expectations target whatever the rest of the chain targets: a namespace, an 
 
 ## Expectations reference
 
-`toHaveMethodComplexityAtMost()`, `toHaveMethodLinesAtMost()` and `toHaveMethodParametersAtMost()` each take:
+Every expectation takes:
 
-- `int $max` — inclusive; a method measuring exactly `$max` passes.
+- `int $max` — inclusive; a symbol measuring exactly `$max` passes.
 - `bool $allowEmpty = false` — see [Selection and completeness](#selection-and-completeness).
+
+`toHaveMethodsAtMost()` takes one more, between the two:
+
+- `bool $ignoringAccessors = false` — drop the accessors from the count; see [`methods` v1](#methods-v1--declared-methods).
+
+A class-scoped expectation names the class in its failure, and points at the class declaration:
+
+```
+App\Http\Controllers\CheckoutController
+app/Http/Controllers/CheckoutController.php:7
+
+Class methods (methods v1): 12
+Allowed: at most 10
+Exceeded by: 2
+
+1 class exceeds the limit
+```
 
 They compose with each other and with built-in arch expectations, in either order, on the same chain:
 
@@ -273,7 +294,7 @@ A target that resolves entirely under `vendor/` errors with `IanRodrigues\CodeQu
 
 ## Metric definitions
 
-Every measurement is tagged with a `{name, version}` identity, for example `ccn2@1` — `IanRodrigues\CodeQuality\Metrics\Metric`. Changing a definition below bumps the version rather than silently reinterpreting existing baselines.
+Every measurement is tagged with a `{name, version}` identity, for example `ccn2@1` — `IanRodrigues\CodeQuality\Metrics\Metric`. Changing a definition below bumps the version rather than silently reinterpreting existing baselines. `ccn2`, `lines` and `params` are measured per method; `methods`, `properties`, `inheritance` and `classLines` are measured per class, interface, trait and enum.
 
 ### `ccn2` v1 — method cyclomatic complexity
 
@@ -358,12 +379,96 @@ public function __construct(
 // params: 4
 ```
 
+### `methods` v1 — declared methods
+
+Every method the declaration itself holds, counted once. A constructor counts as one method whatever it promotes. A method reached through `extends` belongs to the class that declares it, and a method reached through `use` belongs to the trait that declares it; neither is counted here.
+
+With `ignoringAccessors: true`, a method is dropped from the count when its body is exactly one `return $this->property;`, or exactly one `$this->property = $value;` followed by nothing or by `return $this;`. The default counts them, so the noise is opt-out and visible in the policy.
+
+<!-- readme-test: methods-worked-example -->
+```php
+final class MethodsExample
+{
+    public function __construct(private int $size) {}   // +1
+
+    public function size(): int                         // +1, an accessor
+    {
+        return $this->size;
+    }
+
+    public function grow(int $by): self                 // +1, an accessor
+    {
+        $this->size = $this->size + $by;
+
+        return $this;
+    }
+
+    public function describe(): string                  // +1
+    {
+        return 'size '.$this->size;
+    }
+}
+// methods: 4, and 2 with ignoringAccessors: true
+```
+
+### `properties` v1 — declared properties
+
+Every property the declaration itself holds. One declaration listing several names counts once per name, and a promoted constructor parameter counts as the property it promotes. A constant is not a property, an enum case is not a property, and a property reached through `extends` or `use` belongs to the declaration it comes from.
+
+<!-- readme-test: properties-worked-example -->
+```php
+final class PropertiesExample
+{
+    public const string KIND = 'example';       // a constant: +0
+
+    public string $name = '';                   // +1
+
+    public ?int $first = null, $second = null;  // +2
+
+    public function __construct(private readonly int $size) {}  // promoted: +1
+}
+// properties: 4
+```
+
+### `inheritance` v1 — parents up to the root
+
+The number of classes between the class and the root of its hierarchy. A class that extends nothing measures 0, a class that extends one class measures 1, and so on. An implemented interface is not a parent, and neither is a used trait. A parent this package never analyses — one in `vendor/`, or one PHP itself ships — still counts, and so does its own chain, read by reflection.
+
+<!-- readme-test: inheritance-worked-example -->
+```php
+final class InheritanceExample extends \RuntimeException
+{
+}
+// inheritance: RuntimeException + Exception = 2
+```
+
+### `classLines` v1 — class body lines
+
+The count of physical lines strictly between the declaration's opening and closing brace that contain at least one PHP token other than whitespace or a comment, counted exactly as [`lines` v1](#lines-v1--method-body-lines) counts a method body. A nested declaration's lines count too, since they sit inside those braces.
+
+<!-- readme-test: class-lines-worked-example -->
+```php
+final class ClassLinesExample
+{
+    public int $size = 0;          // counts
+
+    public function grow(): void   // counts
+    {
+        $this->size++;             // counts
+    }                              // brace-only: does not count
+}
+// classLines: 3
+```
+
 ### Eligibility
 
 - `ccn2` and `lines` apply only to methods that have a body: methods declared on a class, trait, enum, or anonymous class. They are `null` (ineligible), never `0`, for abstract methods and interface methods.
 - `params` applies to every declared method, including abstract and interface methods.
 - A trait method belongs to the trait, never to any class that uses it. An anonymous class's own methods are measured (their control flow never contributes to the enclosing method's `ccn2`) but are never an assertable target; the physical lines of an anonymous class declaration do count towards the `lines` of the method that declares it, since they sit inside that method's braces.
 - Inherited methods are never counted on the child class — only where they are declared.
+- `methods`, `properties` and `classLines` apply to every named class, interface, trait and enum. An interface and an enum declare no property, so both measure `0` there.
+- `inheritance` applies to a class only. It is `null` (ineligible), never `0`, for an interface, a trait and an enum.
+- An anonymous class is measured but is never an assertable target, exactly as its methods are not.
 
 ### Why the same method reports a different number elsewhere
 
@@ -399,7 +504,7 @@ There is no persistent cache yet, so a second run costs the same as the first. R
 
 ## Versioning
 
-This package follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Independently of the package version, each metric definition (`ccn2`, `lines`, `params`) carries its own version, stamped on every measurement and stored in every baseline entry — see [Metric definitions](#metric-definitions). Widening or narrowing what a metric counts is a minor release of the package, paired with a `CHANGELOG.md` entry naming the metric and its new version, so a baseline generated before the change is recognisable as stale rather than silently reread under a new meaning. Changes to the support matrix — the PHP and Pest versions in [Requirements](#requirements), and the PHP/OS matrix CI runs against — are documented per release in `CHANGELOG.md` as well.
+This package follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Independently of the package version, each metric definition (`ccn2`, `lines`, `params`, `methods`, `properties`, `inheritance`, `classLines`) carries its own version, stamped on every measurement and stored in every baseline entry — see [Metric definitions](#metric-definitions). Widening or narrowing what a metric counts is a minor release of the package, paired with a `CHANGELOG.md` entry naming the metric and its new version, so a baseline generated before the change is recognisable as stale rather than silently reread under a new meaning. Changes to the support matrix — the PHP and Pest versions in [Requirements](#requirements), and the PHP/OS matrix CI runs against — are documented per release in `CHANGELOG.md` as well.
 
 ## Development
 
