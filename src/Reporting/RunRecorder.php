@@ -204,10 +204,9 @@ final class RunRecorder
     }
 
     /**
-     * Present only when files without a class-like symbol were found:
-     * the rest of the coverage block always carries its keys, but this
-     * one is additive so an older `quality-report.v1.json` consumer
-     * ignores it safely.
+     * Additive: present only when files without a class-like symbol were
+     * found, so an older `quality-report.v1.json` consumer ignores it
+     * safely.
      *
      * @return array{withoutClasses: int}|array{}
      */

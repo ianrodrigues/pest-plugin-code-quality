@@ -8,10 +8,9 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
 use Pest\Support\HigherOrderMessage;
 
 /**
- * Where in a test file a quality expectation was declared, captured
- * eagerly at declaration time rather than at lazy verification time: by
- * the time an architecture expectation actually verifies, the call stack
- * no longer points at the `->toHaveMethodXAtMost()` call site.
+ * Where a quality expectation was declared, captured eagerly: by the
+ * time an architecture expectation actually verifies, the call stack no
+ * longer points at the `->toHaveMethodXAtMost()` call site.
  */
 final readonly class PolicyLocation
 {
@@ -23,9 +22,8 @@ final readonly class PolicyLocation
 
     /**
      * Walks the call stack past this package's own source and vendor to the
-     * first project frame — but a top-level `arch(...)` chain replays later
-     * via a `HigherOrderMessage`, which carries the real call site, so that
-     * wins over a plain frame walk when present.
+     * first project frame — but a top-level `arch(...)` chain replays via a
+     * `HigherOrderMessage`, which carries the real call site and wins when present.
      */
     public static function capture(): self
     {

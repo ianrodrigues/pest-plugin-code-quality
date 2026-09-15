@@ -8,10 +8,9 @@ use Pest\TestSuite;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The human-readable name of whichever test is currently running, read off
- * `TestSuite::getInstance()->test` rather than PHPUnit's own method name,
- * since Pest compiles `it('...')`/`arch('...')` descriptions into
- * machine-safe method names that no longer read like the original string.
+ * The human-readable name of the running test, read off
+ * `TestSuite::getInstance()->test` rather than PHPUnit's method name:
+ * Pest compiles `it()`/`arch()` descriptions into machine-safe names that no longer match.
  */
 final class TestIdentity
 {
