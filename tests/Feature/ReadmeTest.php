@@ -291,6 +291,38 @@ it('measures the class lines worked example at the count the README gives it', f
         ->and($result['output'])->toContain('Class lines (classLines v1): 3');
 });
 
+it('measures the class name worked example at the count the README gives it', function (): void {
+    readme_metric_source('OrderLineItemsProcessor', ReadmeProject::block('class-name-worked-example'));
+    readme_metric_policy('App\Support\OrderLineItemsProcessor', 'toHaveClassNamesAtMost', 22);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Class name length (className v1): 23');
+});
+
+it('measures the method name worked example at the count the README gives it', function (): void {
+    readme_metric_source('Invoice', ReadmeProject::block('method-name-worked-example'));
+    readme_metric_policy('App\Support\Invoice', 'toHaveMethodNamesAtMost', 26);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])->toContain('Method name length (methodName v1): 27');
+});
+
+it('measures the variable name worked example, naming the longest identifier, exactly as the README shows it', function (): void {
+    readme_metric_source('Order', ReadmeProject::block('variable-name-worked-example'));
+    readme_metric_policy('App\Support\Order', 'toHaveVariableNamesAtMost', 15);
+
+    $result = ReadmeProject::runPest();
+
+    expect($result['exitCode'])->not->toBe(0)
+        ->and($result['output'])
+        ->toContain('Variable name length (variableName v1): 16')
+        ->toContain('Longest: $lineItemSubtotal (16)');
+});
+
 it('names the class, not a method, when a class-scoped expectation fails', function (): void {
     ReadmeProject::writeTest(implode("\n", [
         "arch('controllers stay small')",
