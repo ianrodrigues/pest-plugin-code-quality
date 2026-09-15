@@ -28,7 +28,7 @@ use function Pest\version;
  *     limit: int,
  *     coverage: CoverageRow,
  *     baseline?: BaselineDocument,
- *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
+ *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int, contributions: list<array{label: string, line: int|null}>}>,
  *     errors: list<string>,
  * }
  * @phpstan-type FullPolicyDocument array{
@@ -40,7 +40,7 @@ use function Pest\version;
  *     coverage: CoverageRow,
  *     baseline?: BaselineDocument,
  *     measurements: list<MeasurementRow>,
- *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
+ *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int, contributions: list<array{label: string, line: int|null}>}>,
  *     errors: list<string>,
  * }
  * @phpstan-type FullReportDocument array{

@@ -19,7 +19,7 @@ use JsonSchema\Validator;
  *     coverage: array{filesFound: int, objects: int, withAst: int, methodsMeasured: int, classesMeasured: int, skipped: list<array{path: string, reason: string}>},
  *     baseline: array{path: string, applied: int, accepted: array<string, int>, stale: list<array{policy: string, symbol: string, metric: array{name: string, version: int}, limit: int, accepted: int, path: string}>}|null,
  *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int, methodName: int, variableName: int}>,
- *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
+ *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int, contributions: list<array{label: string, line: int|null}>}>,
  *     errors: list<string>,
  * }
  */
@@ -75,8 +75,8 @@ it('sorts policies by declaration site, then metric', function (): void {
 it('sorts each policy\'s measurements and violations by path then symbol', function (): void {
     $entry = quality_entry('one', 'tests/A.php', 1);
     $entry['violations'] = [
-        ['symbol' => 'App\\Foo::z', 'path' => 'app/Foo/B.php', 'line' => 20, 'value' => 11, 'limit' => 10],
-        ['symbol' => 'App\\Foo::a', 'path' => 'app/Foo/A.php', 'line' => 10, 'value' => 12, 'limit' => 10],
+        ['symbol' => 'App\\Foo::z', 'path' => 'app/Foo/B.php', 'line' => 20, 'value' => 11, 'limit' => 10, 'contributions' => []],
+        ['symbol' => 'App\\Foo::a', 'path' => 'app/Foo/A.php', 'line' => 10, 'value' => 12, 'limit' => 10, 'contributions' => []],
     ];
 
     $report = QualityReport::from([$entry]);
@@ -87,6 +87,53 @@ it('sorts each policy\'s measurements and violations by path then symbol', funct
 
     expect($measuredSymbols)->toBe(['App\Foo::a', 'App\Foo::z'])
         ->and($violatingSymbols)->toBe(['App\Foo::a', 'App\Foo::z']);
+});
+
+it('carries a violation\'s contributions through to the full and findings-only reports', function (): void {
+    $entry = quality_entry('one', 'tests/A.php', 1);
+    $entry['violations'] = [
+        [
+            'symbol' => 'App\\Foo::z',
+            'path' => 'app/Foo/B.php',
+            'line' => 20,
+            'value' => 11,
+            'limit' => 10,
+            'contributions' => [
+                ['label' => 'if', 'line' => 21],
+                ['label' => 'if', 'line' => 24],
+            ],
+        ],
+    ];
+
+    $report = QualityReport::from([$entry]);
+
+    expect($report->full()['policies'][0]['violations'][0]['contributions'])->toBe([
+        ['label' => 'if', 'line' => 21],
+        ['label' => 'if', 'line' => 24],
+    ])->and($report->findingsOnly()['policies'][0]['violations'][0]['contributions'])->toBe([
+        ['label' => 'if', 'line' => 21],
+        ['label' => 'if', 'line' => 24],
+    ]);
+
+    $document = json_decode(json_encode($report->full(), JSON_THROW_ON_ERROR));
+    $validator = new Validator();
+    $validator->validate($document, quality_schema());
+
+    expect($validator->isValid())->toBeTrue(json_encode($validator->getErrors()) ?: 'invalid');
+});
+
+it('carries the counted constructs on a violation row produced by a real policy run', function (): void {
+    RunRecorder::reset();
+
+    policy_failure(fn () => expect(FIXTURE_APP.'\Http\Controllers')->classes()->toHaveMethodComplexityAtMost(10));
+
+    $document = QualityReport::from(RunRecorder::all())->full();
+    $violation = $document['policies'][0]['violations'][0];
+
+    expect($violation)->toHaveKey('contributions')
+        ->and($violation['contributions'])->not->toBeEmpty();
+
+    RunRecorder::reset();
 });
 
 it('omits measurements from the findings-only report', function (): void {

@@ -87,10 +87,10 @@ final class MetricsVisitor extends NodeVisitorAbstract
             $current->recordVariable($name);
         }
 
-        $delta = $this->ccn2Delta($node);
+        $label = $this->ccn2Label($node);
 
-        if ($delta > 0 && $current->ccn2 !== null) {
-            $current->ccn2 += $delta;
+        if ($label !== null) {
+            $current->recordConstruct($label, $node->getStartLine());
         }
 
         return null;
@@ -188,6 +188,7 @@ final class MetricsVisitor extends NodeVisitorAbstract
             methodName: mb_strlen($node->name->toString()),
             variableName: $accumulator->variableName,
             longestVariableIdentifier: $accumulator->longestVariableIdentifier,
+            ccn2Contributions: $accumulator->ccn2Contributions,
         );
     }
 
@@ -204,32 +205,63 @@ final class MetricsVisitor extends NodeVisitorAbstract
             inheritance: $class->isClass() ? InheritanceDepth::of($class->symbol, $parents) : null,
             classLines: $this->tokens->countBodyLines($class->endFilePos()),
             className: mb_strlen($class->shortName()),
+            methodDeclarations: $class->methodDeclarations(),
+            accessorDeclarations: $class->accessorDeclarations(),
+            propertyDeclarations: $class->propertyDeclarations(),
+            parents: $class->isClass() ? InheritanceDepth::chainOf($class->symbol, $parents) : [],
         );
     }
 
-    private function ccn2Delta(Node $node): int
+    private function ccn2Label(Node $node): ?string
+    {
+        return $this->statementLabel($node) ?? $this->operatorLabel($node) ?? $this->conditionalLabel($node);
+    }
+
+    private function statementLabel(Node $node): ?string
     {
         return match (true) {
-            $node instanceof If_,
-            $node instanceof ElseIf_,
-            $node instanceof For_,
-            $node instanceof Foreach_,
-            $node instanceof While_,
-            $node instanceof Do_,
-            $node instanceof Catch_,
-            $node instanceof Ternary,
-            $node instanceof BooleanAnd,
-            $node instanceof BooleanOr,
-            $node instanceof LogicalAnd,
-            $node instanceof LogicalOr,
-            $node instanceof LogicalXor,
-            $node instanceof Coalesce,
-            $node instanceof AssignCoalesce,
-            $node instanceof NullsafePropertyFetch,
-            $node instanceof NullsafeMethodCall => 1,
-            $node instanceof Case_ => $node->cond instanceof Expr ? 1 : 0,
-            $node instanceof MatchArm => $node->conds !== null ? 1 : 0,
-            default => 0,
+            $node instanceof If_ => 'if',
+            $node instanceof ElseIf_ => 'elseif',
+            $node instanceof For_ => 'for',
+            $node instanceof Foreach_ => 'foreach',
+            $node instanceof While_ => 'while',
+            $node instanceof Do_ => 'do',
+            $node instanceof Catch_ => 'catch',
+            default => null,
         };
+    }
+
+    private function operatorLabel(Node $node): ?string
+    {
+        return match (true) {
+            $node instanceof BooleanAnd => '&&',
+            $node instanceof BooleanOr => '||',
+            $node instanceof LogicalAnd => 'and',
+            $node instanceof LogicalOr => 'or',
+            $node instanceof LogicalXor => 'xor',
+            $node instanceof Coalesce => '??',
+            $node instanceof AssignCoalesce => '??=',
+            $node instanceof NullsafePropertyFetch,
+            $node instanceof NullsafeMethodCall => '?->',
+            default => null,
+        };
+    }
+
+    /** A `default` case or arm is not a branch; a `Ternary` without an `if` branch is the short form. */
+    private function conditionalLabel(Node $node): ?string
+    {
+        if ($node instanceof Ternary) {
+            return $node->if instanceof Expr ? '? :' : '?:';
+        }
+
+        if ($node instanceof Case_) {
+            return $node->cond instanceof Expr ? 'case' : null;
+        }
+
+        if ($node instanceof MatchArm) {
+            return $node->conds !== null ? 'match arm' : null;
+        }
+
+        return null;
     }
 }

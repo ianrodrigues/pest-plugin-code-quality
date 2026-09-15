@@ -23,17 +23,26 @@ final class InheritanceDepth
      */
     public static function of(string $symbol, array $declaredInFile): int
     {
-        $depth = 0;
+        return count(self::chainOf($symbol, $declaredInFile));
+    }
+
+    /**
+     * @param array<string, string|null> $declaredInFile class symbol => parent symbol
+     * @return list<string> parents, nearest first
+     */
+    public static function chainOf(string $symbol, array $declaredInFile): array
+    {
+        $chain = [];
         $seen = [$symbol => true];
         $parent = self::parentOf($symbol, $declaredInFile);
 
         while ($parent !== null && ! isset($seen[$parent])) {
-            $depth++;
+            $chain[] = $parent;
             $seen[$parent] = true;
             $parent = self::parentOf($parent, $declaredInFile);
         }
 
-        return $depth;
+        return $chain;
     }
 
     /**

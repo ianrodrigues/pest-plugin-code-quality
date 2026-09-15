@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Policies;
 
+use IanRodrigues\CodeQuality\Analysis\Contribution;
 use IanRodrigues\CodeQuality\Metrics\Metric;
 
 final readonly class Violation
@@ -21,6 +22,8 @@ final readonly class Violation
         public int $value,
         public int $limit,
         public ?int $accepted = null,
+        /** @var list<Contribution> */
+        public array $contributions = [],
     ) {
     }
 

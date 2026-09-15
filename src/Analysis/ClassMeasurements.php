@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Analysis;
 
 use IanRodrigues\CodeQuality\Analysis\Support\SymbolLocation;
+use IanRodrigues\CodeQuality\Metrics\Metric;
 
 /**
  * `inheritance` is `null` for an interface, a trait, or an enum, since
@@ -29,6 +30,14 @@ final readonly class ClassMeasurements
         public ?int $inheritance,
         public int $classLines,
         public int $className,
+        /** @var list<Contribution> */
+        public array $methodDeclarations = [],
+        /** @var list<Contribution> */
+        public array $accessorDeclarations = [],
+        /** @var list<Contribution> */
+        public array $propertyDeclarations = [],
+        /** @var list<string> */
+        public array $parents = [],
     ) {
         $this->symbol = $location->symbol;
         $this->path = $location->path;
@@ -48,6 +57,47 @@ final readonly class ClassMeasurements
     public function declaredMethods(bool $ignoringAccessors): int
     {
         return $ignoringAccessors ? $this->methods - $this->accessors : $this->methods;
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function contributionsTo(Metric $metric, bool $ignoringAccessors): array
+    {
+        return match ($metric) {
+            Metric::Methods => $ignoringAccessors ? $this->methodDeclarationsExcludingAccessors() : $this->methodDeclarations,
+            Metric::Properties => $this->propertyDeclarations,
+            Metric::Inheritance => array_map(
+                static fn (string $parent): Contribution => new Contribution($parent, null),
+                $this->parents,
+            ),
+            Metric::Ccn2,
+            Metric::Lines,
+            Metric::Params,
+            Metric::ClassLines,
+            Metric::ClassName,
+            Metric::MethodName,
+            Metric::VariableName => [],
+        };
+    }
+
+    /**
+     * A class cannot declare two methods with one name, so the name
+     * alone identifies an accessor.
+     *
+     * @return list<Contribution>
+     */
+    private function methodDeclarationsExcludingAccessors(): array
+    {
+        $accessorNames = array_map(
+            static fn (Contribution $accessor): string => $accessor->label,
+            $this->accessorDeclarations,
+        );
+
+        return array_values(array_filter(
+            $this->methodDeclarations,
+            static fn (Contribution $method): bool => ! in_array($method->label, $accessorNames, true),
+        ));
     }
 
     /**

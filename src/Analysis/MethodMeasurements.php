@@ -34,6 +34,8 @@ final readonly class MethodMeasurements
         public int $methodName,
         public int $variableName,
         public ?string $longestVariableIdentifier,
+        /** @var list<Contribution> */
+        public array $ccn2Contributions = [],
     ) {
         $this->symbol = $location->symbol;
         $this->path = $location->path;
@@ -72,6 +74,25 @@ final readonly class MethodMeasurements
     public function toArray(): array
     {
         return [$this->ccn2, $this->lines, $this->params, $this->methodName, $this->variableName];
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function contributionsTo(Metric $metric): array
+    {
+        return match ($metric) {
+            Metric::Ccn2 => $this->ccn2Contributions,
+            Metric::Lines,
+            Metric::Params,
+            Metric::MethodName,
+            Metric::VariableName,
+            Metric::Methods,
+            Metric::Properties,
+            Metric::Inheritance,
+            Metric::ClassLines,
+            Metric::ClassName => [],
+        };
     }
 
     /**

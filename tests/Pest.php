@@ -13,6 +13,7 @@ pest()->extend(TestCase::class)->in('Feature');
 Config::baseline(__DIR__.'/quality-baseline.json');
 
 const FIXTURE_APP = 'IanRodrigues\CodeQuality\Tests\Fixtures\App';
+const FIXTURE_METRICS = 'IanRodrigues\CodeQuality\Tests\Fixtures\Metrics';
 
 /**
  * Architecture expectations verify lazily, on the first proxied call or on

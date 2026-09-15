@@ -230,7 +230,28 @@
         "path": { "type": "string" },
         "line": { "type": "integer", "minimum": 0 },
         "value": { "type": "integer" },
-        "limit": { "type": "integer", "minimum": 0 }
+        "limit": { "type": "integer", "minimum": 0 },
+        "contributions": {
+          "description": "The items that produced value, for a metric that has them: counted constructs for ccn2, declared methods for methods, declared properties for properties, parents nearest first for inheritance. Empty for every other metric. Omitted by a report produced before this field existed.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/contribution" }
+        }
+      }
+    },
+    "contribution": {
+      "type": "object",
+      "required": ["label", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "description": "A ccn2 construct (if, elseif, for, foreach, while, do, case, catch, ? :, ?:, &&, ||, and, or, xor, ??, ??=, ?->, match arm), a method or property name, or a parent class name.",
+          "type": "string"
+        },
+        "line": {
+          "description": "Null for a parent class, which may live in another file.",
+          "type": ["integer", "null"],
+          "minimum": 1
+        }
       }
     }
   }

@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Analysis\Support;
 
+use IanRodrigues\CodeQuality\Analysis\Contribution;
+
 /**
  * Mutable, in-progress state for one method while `MetricsVisitor` is still
- * traversing its body. `ccn2` accumulates as counted constructs are found;
- * `variableName` and `longestVariableIdentifier` track the longest
- * declared variable seen so far, keeping the first one found on a tie;
- * everything else is fixed for the method's lifetime.
+ * traversing its body. `ccn2` and `ccn2Contributions` grow as counted
+ * constructs are found; `variableName` and `longestVariableIdentifier`
+ * track the longest declared variable seen so far, keeping the first one
+ * found on a tie; everything else is fixed for the method's lifetime.
  */
 final class MethodAccumulator
 {
     public ?int $ccn2;
+
+    /** @var list<Contribution> */
+    public array $ccn2Contributions = [];
 
     public int $variableName = 0;
 
@@ -37,5 +42,16 @@ final class MethodAccumulator
             $this->variableName = $length;
             $this->longestVariableIdentifier = $name;
         }
+    }
+
+    /** A no-op on a bodiless method, whose `ccn2` stays `null`. */
+    public function recordConstruct(string $label, int $line): void
+    {
+        if ($this->ccn2 === null) {
+            return;
+        }
+
+        $this->ccn2Contributions[] = new Contribution($label, $line);
+        $this->ccn2++;
     }
 }

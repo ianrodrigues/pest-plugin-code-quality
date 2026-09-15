@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Analysis\Support;
 
+use IanRodrigues\CodeQuality\Analysis\Contribution;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
@@ -58,36 +60,77 @@ final readonly class ClassDeclaration
 
     public function methods(): int
     {
-        return count($this->node->getMethods());
+        return count($this->methodDeclarations());
     }
 
     public function accessors(): int
     {
-        return count(array_filter(
-            $this->node->getMethods(),
-            AccessorMethod::matches(...),
-        ));
+        return count($this->accessorDeclarations());
     }
 
     /** Promoted constructor parameters included; constants and enum cases excluded. */
     public function properties(): int
     {
-        $declared = 0;
+        return count($this->propertyDeclarations());
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function methodDeclarations(): array
+    {
+        return array_map(
+            static fn (ClassMethod $method): Contribution => new Contribution($method->name->toString(), $method->getStartLine()),
+            $this->node->getMethods(),
+        );
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function accessorDeclarations(): array
+    {
+        return array_map(
+            static fn (ClassMethod $method): Contribution => new Contribution($method->name->toString(), $method->getStartLine()),
+            array_values(array_filter(
+                $this->node->getMethods(),
+                AccessorMethod::matches(...),
+            )),
+        );
+    }
+
+    /**
+     * @return list<Contribution>
+     */
+    public function propertyDeclarations(): array
+    {
+        $declarations = [];
 
         foreach ($this->node->getProperties() as $property) {
-            $declared += count($property->props);
+            foreach ($property->props as $item) {
+                $declarations[] = new Contribution($item->name->toString(), $item->getStartLine());
+            }
         }
 
         $constructor = $this->node->getMethod('__construct');
 
         if (! $constructor instanceof ClassMethod) {
-            return $declared;
+            return $declarations;
         }
 
-        return $declared + count(array_filter(
-            $constructor->params,
-            static fn (Param $param): bool => $param->isPromoted(),
-        ));
+        foreach ($constructor->params as $param) {
+            if ($param->isPromoted()) {
+                $declarations[] = new Contribution($this->promotedParamName($param), $param->getStartLine());
+            }
+        }
+
+        return $declarations;
+    }
+
+    /** The parameter variable is always a plain, named variable in valid PHP. */
+    private function promotedParamName(Param $param): string
+    {
+        return $param->var instanceof Variable && is_string($param->var->name) ? $param->var->name : '';
     }
 
     /** The byte offset of the declaration's closing brace. */

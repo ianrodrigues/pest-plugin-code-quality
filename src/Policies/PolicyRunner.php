@@ -200,6 +200,7 @@ final class PolicyRunner
             $value,
             $policy->limit,
             $accepted,
+            $policy->contributionsFor($symbol),
         );
     }
 
