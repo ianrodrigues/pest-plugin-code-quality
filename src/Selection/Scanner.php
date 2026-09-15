@@ -16,10 +16,7 @@ use Pest\Arch\Repositories\ObjectsRepository;
 use PhpParser\Error as ParserError;
 use PhpParser\Node;
 use PhpParser\Node\Name;
-use PhpParser\Node\Stmt\Class_;
-use PhpParser\Node\Stmt\Enum_;
-use PhpParser\Node\Stmt\Interface_;
-use PhpParser\Node\Stmt\Trait_;
+use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\NodeFinder;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
@@ -72,13 +69,22 @@ final readonly class Scanner
         }
 
         $skipped = [];
+        $withoutClasses = 0;
 
         foreach ($files as $canonical => $original) {
             if (isset($withAst[$canonical])) {
                 continue;
             }
 
-            $skipped[] = new SkippedFile(ProjectPath::relative($canonical), $this->reasonFor($original, $directories));
+            $reason = $this->reasonFor($original, $directories);
+
+            if (! $reason instanceof SkipReason) {
+                $withoutClasses++;
+
+                continue;
+            }
+
+            $skipped[] = new SkippedFile(ProjectPath::relative($canonical), $reason);
         }
 
         return new TargetCoverage(
@@ -89,6 +95,7 @@ final readonly class Scanner
             count($withAst),
             $this->eligibleMethods($filteredObjects, $policy),
             $skipped,
+            $withoutClasses,
         );
     }
 
@@ -195,9 +202,13 @@ final readonly class Scanner
     }
 
     /**
+     * Null means the file declares no class-like symbol at all — a
+     * functions file, a config file returning an array — so there is
+     * nothing to measure and it is not a skip.
+     *
      * @param list<ResolvedDirectory> $directories
      */
-    private function reasonFor(string $file, array $directories): SkipReason
+    private function reasonFor(string $file, array $directories): ?SkipReason
     {
         $owner = $this->ownerOf($file, $directories);
 
@@ -205,7 +216,17 @@ final readonly class Scanner
             return SkipReason::Vendor;
         }
 
-        $declared = $this->declaredNamespace($file);
+        $node = $this->classLike($file);
+
+        if ($node === false) {
+            return SkipReason::NoAst;
+        }
+
+        if (! $node instanceof ClassLike) {
+            return null;
+        }
+
+        $declared = $this->declaredNamespace($node);
 
         if ($declared === null) {
             return SkipReason::NoAst;
@@ -274,43 +295,43 @@ final readonly class Scanner
         return $owner->namespace.'\\'.$relative;
     }
 
-    private function declaredNamespace(string $file): ?string
+    /**
+     * `false` means the file could not be read or parsed at all; `null`
+     * means it parsed fine but declares no class, interface, trait or
+     * enum. Both are distinct from finding a `ClassLike` node.
+     */
+    private function classLike(string $file): ClassLike|false|null
     {
         $contents = @file_get_contents($file);
 
         if ($contents === false) {
-            return null;
+            return false;
         }
 
         try {
             $ast = $this->parser->parse($contents);
         } catch (ParserError) {
-            return null;
+            return false;
         }
 
         if ($ast === null) {
-            return null;
+            return false;
         }
 
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new NameResolver());
         $stmts = $traverser->traverse($ast);
 
-        $node = new NodeFinder()->findFirst(
-            $stmts,
-            static fn (Node $node): bool => $node instanceof Class_
-                || $node instanceof Trait_
-                || $node instanceof Interface_
-                || $node instanceof Enum_,
-        );
+        $node = new NodeFinder()->findFirst($stmts, static fn (Node $node): bool => $node instanceof ClassLike);
 
-        if (! $node instanceof Class_ && ! $node instanceof Trait_ && ! $node instanceof Interface_ && ! $node instanceof Enum_) {
-            return null;
-        }
+        return $node instanceof ClassLike ? $node : null;
+    }
 
+    private function declaredNamespace(ClassLike $node): ?string
+    {
         $name = $node->namespacedName;
 
-        if (!$name instanceof Name) {
+        if (! $name instanceof Name) {
             return null;
         }
 

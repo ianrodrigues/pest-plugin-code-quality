@@ -133,6 +133,11 @@
         "skipped": {
           "type": "array",
           "items": { "$ref": "#/$defs/skippedFile" }
+        },
+        "withoutClasses": {
+          "description": "Files found that declare no class, interface, trait or enum — a functions file, a config file returning an array. Omitted when zero.",
+          "type": "integer",
+          "minimum": 0
         }
       }
     },

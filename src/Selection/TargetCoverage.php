@@ -23,6 +23,7 @@ final readonly class TargetCoverage
         public int $objectsWithAst,
         public int $eligibleMethods,
         public array $skipped,
+        public int $withoutClasses = 0,
     ) {
     }
 
