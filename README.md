@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml/badge.svg)](https://github.com/ianrodrigues/pest-plugin-code-quality/actions/workflows/tests.yml)
 
-A third-party [Pest](https://pestphp.com) plugin, that adds maintainability limits — per method, cyclomatic complexity, body line count and parameter count; per class, declared methods, declared properties, inheritance depth and body line count — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
+A third-party [Pest](https://pestphp.com) plugin, that adds maintainability limits — per method, cyclomatic complexity, body line count, parameter count, name length and longest variable name; per class, declared methods, declared properties, inheritance depth, body line count and name length — to Pest's `arch()` chain. It is not part of Pest itself, and it ships baselines so a limit can be adopted on a codebase that does not meet it yet.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ On a Laravel application that still lists `phpunit/phpunit` in `require-dev` (th
 
 ## Quick start
 
-Seven expectations join Pest's `arch()` chain, each taking an inclusive limit — `AtMost(10)` passes a symbol that measures exactly 10:
+Ten expectations join Pest's `arch()` chain, each taking an inclusive limit — `AtMost(10)` passes a symbol that measures exactly 10:
 
 | Expectation | Metric | Measured per |
 |---|---|---|
@@ -32,6 +32,9 @@ Seven expectations join Pest's `arch()` chain, each taking an inclusive limit �
 | `toHavePropertiesAtMost(int $max)` | `properties` | class |
 | `toHaveInheritanceDepthAtMost(int $max)` | `inheritance` | class |
 | `toHaveClassLinesAtMost(int $max)` | `classLines` | class |
+| `toHaveClassNamesAtMost(int $max)` | `className` | class |
+| `toHaveMethodNamesAtMost(int $max)` | `methodName` | method |
+| `toHaveVariableNamesAtMost(int $max)` | `variableName` | method |
 
 A policy for controllers, and a separate complexity budget for a parsing layer:
 
@@ -297,7 +300,9 @@ A target that resolves entirely under `vendor/` errors with `IanRodrigues\CodeQu
 
 ## Metric definitions
 
-Every measurement is tagged with a `{name, version}` identity, for example `ccn2@1` — `IanRodrigues\CodeQuality\Metrics\Metric`. Changing a definition below bumps the version rather than silently reinterpreting existing baselines. `ccn2`, `lines` and `params` are measured per method; `methods`, `properties`, `inheritance` and `classLines` are measured per class, interface, trait and enum.
+Every measurement is tagged with a `{name, version}` identity, for example `ccn2@1` — `IanRodrigues\CodeQuality\Metrics\Metric`. Changing a definition below bumps the version rather than silently reinterpreting existing baselines. `ccn2`, `lines`, `params`, `methodName` and `variableName` are measured per method; `methods`, `properties`, `inheritance`, `classLines` and `className` are measured per class, interface, trait and enum.
+
+A name length is always a character count, taken with `mb_strlen()`: a multibyte identifier counts by character, never by byte. Line length itself is out of scope for this package; keep that with a formatter, such as Pint's line-length rules.
 
 ### `ccn2` v1 — method cyclomatic complexity
 
@@ -463,13 +468,61 @@ final class ClassLinesExample
 // classLines: 3
 ```
 
+### `className` v1 — class name length
+
+The character count of the declaration's own short name — a class, interface, trait or enum — never its namespace.
+
+<!-- readme-test: class-name-worked-example -->
+```php
+final class OrderLineItemsProcessor
+{
+}
+// className: 23
+```
+
+### `methodName` v1 — method name length
+
+The character count of the method's own short name. A magic method (`__construct`, `__toString`, `__get`, and the rest PHP reserves a `__` name for) is exempt: its name is not the method's own choice to make.
+
+<!-- readme-test: method-name-worked-example -->
+```php
+final class Invoice
+{
+    public function calculateOutstandingBalance(): float
+    {
+        return 0.0;
+    }
+}
+// methodName: 27
+```
+
+### `variableName` v1 — variable name length
+
+The character count of the longest variable identifier — without its `$` — a method declares, counted per declaration site: a parameter (a promoted constructor property included), a local assignment, a `foreach` key or value, a `catch` variable, and a closure or arrow function's own parameters and, for a closure, its `use` variables. `$this` and a superglobal (`$_GET`, `$GLOBALS`, and the rest) are never a declaration and never counted. A method that declares no variable measures `0`.
+
+A failure names the longest identifier itself, alongside its length:
+
+<!-- readme-test: variable-name-worked-example -->
+```php
+final class Order
+{
+    public function total(int $quantity, float $unitPrice): float
+    {
+        $lineItemSubtotal = $quantity * $unitPrice;
+
+        return $lineItemSubtotal;
+    }
+}
+// variableName: 16, the identifier is lineItemSubtotal
+```
+
 ### Eligibility
 
 - `ccn2` and `lines` apply only to methods that have a body: methods declared on a class, trait, enum, or anonymous class. They are `null` (ineligible), never `0`, for abstract methods and interface methods.
-- `params` applies to every declared method, including abstract and interface methods.
-- A trait method belongs to the trait, never to any class that uses it. An anonymous class's own methods are measured (their control flow never contributes to the enclosing method's `ccn2`) but are never an assertable target; the physical lines of an anonymous class declaration do count towards the `lines` of the method that declares it, since they sit inside that method's braces.
+- `params`, `methodName` and `variableName` apply to every declared method, including abstract and interface methods. `methodName` is the exception among the three: it does not apply to a magic method, so a limit never forces PHP's own name to change.
+- A trait method belongs to the trait, never to any class that uses it. An anonymous class's own methods are measured (their control flow never contributes to the enclosing method's `ccn2`, nor their own variables to its `variableName`) but are never an assertable target; the physical lines of an anonymous class declaration do count towards the `lines` of the method that declares it, since they sit inside that method's braces.
 - Inherited methods are never counted on the child class — only where they are declared.
-- `methods`, `properties` and `classLines` apply to every named class, interface, trait and enum. An enum declares no property, so it measures `0` there; an interface usually does too, but since PHP 8.4 it may declare one through a property hook, which counts here like any other.
+- `methods`, `properties`, `classLines` and `className` apply to every named class, interface, trait and enum. An enum declares no property, so it measures `0` there; an interface usually does too, but since PHP 8.4 it may declare one through a property hook, which counts here like any other.
 - `inheritance` applies to a class only. It is `null` (ineligible), never `0`, for an interface, a trait and an enum.
 - An anonymous class is measured but is never an assertable target, exactly as its methods are not.
 
@@ -507,7 +560,7 @@ There is no persistent cache yet, so a second run costs the same as the first. R
 
 ## Versioning
 
-This package follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Independently of the package version, each metric definition (`ccn2`, `lines`, `params`, `methods`, `properties`, `inheritance`, `classLines`) carries its own version, stamped on every measurement and stored in every baseline entry — see [Metric definitions](#metric-definitions). Widening or narrowing what a metric counts is a minor release of the package, paired with a `CHANGELOG.md` entry naming the metric and its new version, so a baseline generated before the change is recognisable as stale rather than silently reread under a new meaning. Changes to the support matrix — the PHP and Pest versions in [Requirements](#requirements), and the PHP/OS matrix CI runs against — are documented per release in `CHANGELOG.md` as well.
+This package follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Independently of the package version, each metric definition (`ccn2`, `lines`, `params`, `methods`, `properties`, `inheritance`, `classLines`, `className`, `methodName`, `variableName`) carries its own version, stamped on every measurement and stored in every baseline entry — see [Metric definitions](#metric-definitions). Widening or narrowing what a metric counts is a minor release of the package, paired with a `CHANGELOG.md` entry naming the metric and its new version, so a baseline generated before the change is recognisable as stale rather than silently reread under a new meaning. Changes to the support matrix — the PHP and Pest versions in [Requirements](#requirements), and the PHP/OS matrix CI runs against — are documented per release in `CHANGELOG.md` as well.
 
 ## Development
 
@@ -520,7 +573,7 @@ Individual steps: `composer lint` (fix formatting), `composer lint:check` (verif
 
 `composer install` also points git at `.githooks/`: `pre-commit` lints staged PHP, `commit-msg` validates the commit message format. CI runs `composer lint:check`, `composer analyse`, `composer rector:check`, `composer test` and `composer test:parallel` on the PHP/OS matrix in `.github/workflows/tests.yml`.
 
-PHPStan (level max) sees all three expectations through `extension.neon`, picked up automatically by [phpstan/extension-installer](https://github.com/phpstan/extension-installer) or added to `includes` by hand. Editors that do not run PHPStan can be pointed at `stubs/expectations.stub.php`, which declares the same methods as `@method` annotations for autocompletion.
+PHPStan (level max) sees every expectation through `extension.neon`, picked up automatically by [phpstan/extension-installer](https://github.com/phpstan/extension-installer) or added to `includes` by hand. Editors that do not run PHPStan can be pointed at `stubs/expectations.stub.php`, which declares the same methods as `@method` annotations for autocompletion.
 
 ## License
 
