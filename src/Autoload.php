@@ -46,6 +46,11 @@ $register = static function (): void {
         /** @var Expectation<array<int, string>|string> $this */
         return PolicyExpectation::make($this, Policy::inheritance($max, $allowEmpty));
     });
+
+    expect()->extend('toHaveClassLinesAtMost', function (int $max, bool $allowEmpty = false): ArchExpectation {
+        /** @var Expectation<array<int, string>|string> $this */
+        return PolicyExpectation::make($this, Policy::classLines($max, $allowEmpty));
+    });
 };
 
 if (function_exists('expect')) {
