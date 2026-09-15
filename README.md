@@ -384,7 +384,7 @@ public function __construct(
 
 Every method the declaration itself holds, counted once. A constructor counts as one method whatever it promotes. A method reached through `extends` belongs to the class that declares it, and a method reached through `use` belongs to the trait that declares it; neither is counted here.
 
-With `ignoringAccessors: true`, a method is dropped from the count when its body is exactly one `return $this->property;`, or exactly one `$this->property = $value;` followed by nothing or by `return $this;`. The default counts them, so the noise is opt-out and visible in the policy.
+With `ignoringAccessors: true`, a method is dropped from the count when its body is exactly one `return $this->property;`, or exactly one assignment to `$this->property` — whatever value it assigns — followed by nothing or by `return $this;`. The default counts them, so the noise is opt-out and visible in the policy.
 
 <!-- readme-test: methods-worked-example -->
 ```php
