@@ -6,7 +6,7 @@ use IanRodrigues\CodeQuality\Metrics\Metric;
 use IanRodrigues\CodeQuality\Metrics\Scope;
 
 it('reports every case exactly once, so a new one forces a new dataset row', function (): void {
-    expect(Metric::cases())->toHaveCount(7);
+    expect(Metric::cases())->toHaveCount(10);
 });
 
 it('exposes version, label, expectation and identifier per case', function (
@@ -27,6 +27,9 @@ it('exposes version, label, expectation and identifier per case', function (
     'properties' => [Metric::Properties, 'Class properties', 'toHavePropertiesAtMost', 'properties@1'],
     'inheritance' => [Metric::Inheritance, 'Inheritance depth', 'toHaveInheritanceDepthAtMost', 'inheritance@1'],
     'classLines' => [Metric::ClassLines, 'Class lines', 'toHaveClassLinesAtMost', 'classLines@1'],
+    'className' => [Metric::ClassName, 'Class name length', 'toHaveClassNamesAtMost', 'className@1'],
+    'methodName' => [Metric::MethodName, 'Method name length', 'toHaveMethodNamesAtMost', 'methodName@1'],
+    'variableName' => [Metric::VariableName, 'Variable name length', 'toHaveVariableNamesAtMost', 'variableName@1'],
 ]);
 
 it('backs each case with its stable string value and its scope', function (Metric $metric, string $value, Scope $scope): void {
@@ -41,6 +44,9 @@ it('backs each case with its stable string value and its scope', function (Metri
     'properties' => [Metric::Properties, 'properties', Scope::ClassLike],
     'inheritance' => [Metric::Inheritance, 'inheritance', Scope::ClassLike],
     'classLines' => [Metric::ClassLines, 'classLines', Scope::ClassLike],
+    'className' => [Metric::ClassName, 'className', Scope::ClassLike],
+    'methodName' => [Metric::MethodName, 'methodName', Scope::Method],
+    'variableName' => [Metric::VariableName, 'variableName', Scope::Method],
 ]);
 
 it('names the plural noun of each scope', function (): void {
