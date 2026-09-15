@@ -141,9 +141,32 @@ final class OutputPlugin implements AddsOutput, HandlesArguments, Terminable
             return $exitCode;
         }
 
-        return $baseline->write($entries, $this->baselinePath($entries), $this->mode)
-            ? $exitCode
-            : max($exitCode, 1);
+        return $this->writeBaseline($baseline, $entries, $exitCode);
+    }
+
+    /**
+     * A policy no longer throws while a baseline is being generated or
+     * tightened, so its violations have to fail the run from here instead:
+     * on their own when the write itself fails, or, once it succeeds, when
+     * the code it measured still breaks its own limit.
+     *
+     * @param list<PolicyEntry> $entries
+     */
+    private function writeBaseline(BaselineCommand $baseline, array $entries, int $exitCode): int
+    {
+        if (! $baseline->write($entries, $this->baselinePath($entries), $this->mode)) {
+            return max($exitCode, 1);
+        }
+
+        return $this->hasViolations($entries) ? max($exitCode, 1) : $exitCode;
+    }
+
+    /**
+     * @param list<PolicyEntry> $entries
+     */
+    private function hasViolations(array $entries): bool
+    {
+        return array_any($entries, static fn (array $entry): bool => $entry['violations'] !== []);
     }
 
     /**
