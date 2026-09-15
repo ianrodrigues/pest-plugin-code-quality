@@ -93,7 +93,7 @@ final readonly class Scanner
             count($files),
             count($discovered),
             count($withAst),
-            $this->eligibleMethods($filteredObjects, $policy),
+            $this->eligibleSymbols($filteredObjects, $policy),
             $skipped,
             $withoutClasses,
         );
@@ -139,7 +139,7 @@ final readonly class Scanner
     /**
      * @param list<ObjectDescription> $filteredObjects
      */
-    private function eligibleMethods(array $filteredObjects, Policy $policy): int
+    private function eligibleSymbols(array $filteredObjects, Policy $policy): int
     {
         $count = 0;
 
@@ -164,12 +164,12 @@ final readonly class Scanner
                 fn (): FileMeasurements => $this->measurer->measureAst($path, $stmts),
             );
 
-            foreach ($measurements->methods() as $method) {
-                if ($method->isAnonymous()) {
+            foreach ($policy->symbolsIn($measurements) as $symbol) {
+                if ($symbol->isAnonymous()) {
                     continue;
                 }
 
-                if ($policy->valueFor($method) !== null) {
+                if ($policy->valueFor($symbol) !== null) {
                     $count++;
                 }
             }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace IanRodrigues\CodeQuality\Reporting;
 
+use IanRodrigues\CodeQuality\Analysis\ClassMeasurements;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Baseline\BaselineEntry;
 use IanRodrigues\CodeQuality\Baseline\DuplicatePolicyIdentity;
@@ -21,6 +22,18 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
  * worker process can serialise its share straight to JSON.
  *
  * @phpstan-import-type BaselineEntryRow from BaselineEntry
+ * @phpstan-type MethodRow array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}
+ * @phpstan-type ClassRow array{symbol: string, path: string, line: int, methods: int, properties: int, inheritance: int|null, classLines: int}
+ * @phpstan-type MeasurementRow ClassRow|MethodRow
+ * @phpstan-type CoverageRow array{
+ *     filesFound: int,
+ *     objects: int,
+ *     withAst: int,
+ *     methodsMeasured: int,
+ *     classesMeasured: int,
+ *     skipped: list<array{path: string, reason: string}>,
+ *     withoutClasses?: int,
+ * }
  * @phpstan-type PolicyEntry array{
  *     id: string,
  *     policy: string,
@@ -30,21 +43,14 @@ use IanRodrigues\CodeQuality\Support\ProjectPath;
  *     limit: int,
  *     directories: list<string>,
  *     exclusions: list<string>,
- *     coverage: array{
- *         filesFound: int,
- *         objects: int,
- *         withAst: int,
- *         methodsMeasured: int,
- *         skipped: list<array{path: string, reason: string}>,
- *         withoutClasses?: int,
- *     },
+ *     coverage: CoverageRow,
  *     baseline: array{
  *         path: string,
  *         applied: int,
  *         accepted: array<string, int>,
  *         stale: list<BaselineEntryRow>,
  *     }|null,
- *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}>,
+ *     measurements: list<MeasurementRow>,
  *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
  *     errors: list<string>,
  * }
@@ -75,7 +81,10 @@ final class RunRecorder
             'exclusions' => $exclusions,
             'coverage' => self::coverageOf($result),
             'baseline' => self::baselineOf($result),
-            'measurements' => array_map(self::measurementRow(...), $result->measurements),
+            'measurements' => array_map(
+                static fn (ClassMeasurements|MethodMeasurements $symbol): array => self::measurementRow($result->policy, $symbol),
+                $result->measurements,
+            ),
             'violations' => array_map(self::violationRow(...), $result->violations),
             'errors' => [],
         ];
@@ -104,7 +113,14 @@ final class RunRecorder
             'limit' => $policy->limit,
             'directories' => [],
             'exclusions' => [],
-            'coverage' => ['filesFound' => 0, 'objects' => 0, 'withAst' => 0, 'methodsMeasured' => 0, 'skipped' => []],
+            'coverage' => [
+                'filesFound' => 0,
+                'objects' => 0,
+                'withAst' => 0,
+                'methodsMeasured' => 0,
+                'classesMeasured' => 0,
+                'skipped' => [],
+            ],
             'baseline' => null,
             'measurements' => [],
             'violations' => [],
@@ -149,7 +165,7 @@ final class RunRecorder
     }
 
     /**
-     * @return array{filesFound: int, objects: int, withAst: int, methodsMeasured: int, skipped: list<array{path: string, reason: string}>, withoutClasses?: int}
+     * @return CoverageRow
      */
     private static function coverageOf(PolicyResult $result): array
     {
@@ -158,6 +174,7 @@ final class RunRecorder
         return [
             ...self::coverageCounts($coverage),
             'methodsMeasured' => $result->methodsMeasured,
+            'classesMeasured' => $result->classesMeasured,
             'skipped' => self::skippedRows($coverage),
             ...self::withoutClassesField($coverage),
         ];
@@ -254,17 +271,29 @@ final class RunRecorder
     }
 
     /**
-     * @return array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}
+     * @return MeasurementRow
      */
-    private static function measurementRow(MethodMeasurements $method): array
+    private static function measurementRow(Policy $policy, ClassMeasurements|MethodMeasurements $symbol): array
     {
+        if ($symbol instanceof MethodMeasurements) {
+            return [
+                'symbol' => $symbol->symbol,
+                'path' => ProjectPath::relative($symbol->path),
+                'line' => $symbol->line,
+                'ccn2' => $symbol->ccn2,
+                'lines' => $symbol->lines,
+                'params' => $symbol->params,
+            ];
+        }
+
         return [
-            'symbol' => $method->symbol,
-            'path' => ProjectPath::relative($method->path),
-            'line' => $method->line,
-            'ccn2' => $method->ccn2,
-            'lines' => $method->lines,
-            'params' => $method->params,
+            'symbol' => $symbol->symbol,
+            'path' => ProjectPath::relative($symbol->path),
+            'line' => $symbol->line,
+            'methods' => $symbol->declaredMethods($policy->ignoringAccessors),
+            'properties' => $symbol->properties,
+            'inheritance' => $symbol->inheritance,
+            'classLines' => $symbol->classLines,
         ];
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace IanRodrigues\CodeQuality\Reporting;
 
 use IanRodrigues\CodeQuality\Baseline\BaselineEntry;
+use IanRodrigues\CodeQuality\Metrics\Metric;
+use IanRodrigues\CodeQuality\Metrics\Scope;
 
 use function Pest\version;
 
@@ -14,6 +16,8 @@ use function Pest\version;
  * versioned JSON document validated against `schema/quality-report.v1.json`.
  *
  * @phpstan-import-type PolicyEntry from RunRecorder
+ * @phpstan-import-type CoverageRow from RunRecorder
+ * @phpstan-import-type MeasurementRow from RunRecorder
  * @phpstan-import-type BaselineEntryRow from BaselineEntry
  * @phpstan-type BaselineDocument array{path: string, applied: int, stale: list<BaselineEntryRow>}
  * @phpstan-type FindingsPolicyDocument array{
@@ -22,14 +26,7 @@ use function Pest\version;
  *     targets: list<string>,
  *     metric: array{name: string, version: int},
  *     limit: int,
- *     coverage: array{
- *         filesFound: int,
- *         objects: int,
- *         withAst: int,
- *         methodsMeasured: int,
- *         skipped: list<array{path: string, reason: string}>,
- *         withoutClasses?: int,
- *     },
+ *     coverage: CoverageRow,
  *     baseline?: BaselineDocument,
  *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
  *     errors: list<string>,
@@ -40,16 +37,9 @@ use function Pest\version;
  *     targets: list<string>,
  *     metric: array{name: string, version: int},
  *     limit: int,
- *     coverage: array{
- *         filesFound: int,
- *         objects: int,
- *         withAst: int,
- *         methodsMeasured: int,
- *         skipped: list<array{path: string, reason: string}>,
- *         withoutClasses?: int,
- *     },
+ *     coverage: CoverageRow,
  *     baseline?: BaselineDocument,
- *     measurements: list<array{symbol: string, path: string, line: int, ccn2: int|null, lines: int|null, params: int}>,
+ *     measurements: list<MeasurementRow>,
  *     violations: list<array{symbol: string, path: string, line: int, value: int, limit: int}>,
  *     errors: list<string>,
  * }
@@ -215,6 +205,8 @@ final readonly class QualityReport
      */
     private function consoleBlock(array $policy): string
     {
+        $scope = Metric::from($policy['metric']['name'])->scope();
+
         $lines = [
             $policy['id'],
             "{$policy['location']['file']}:{$policy['location']['line']}",
@@ -224,11 +216,12 @@ final readonly class QualityReport
             'Directories searched: '.$this->joinOrNone($policy['directories']),
             'Exclusions: '.$this->joinOrNone($policy['exclusions']),
             sprintf(
-                'Files found: %d  Objects: %d  With AST: %d  Methods measured: %d',
+                'Files found: %d  Objects: %d  With AST: %d  %s measured: %d',
                 $policy['coverage']['filesFound'],
                 $policy['coverage']['objects'],
                 $policy['coverage']['withAst'],
-                $policy['coverage']['methodsMeasured'],
+                ucfirst($scope->plural()),
+                $scope === Scope::Method ? $policy['coverage']['methodsMeasured'] : $policy['coverage']['classesMeasured'],
             ),
             ...$this->withoutClassesLines($policy),
         ];
@@ -251,22 +244,67 @@ final readonly class QualityReport
             $lines[] = 'Measurements:';
 
             foreach ($measurements as $measurement) {
-                $accepted = $policy['baseline']['accepted'][$measurement['symbol']] ?? null;
-
-                $lines[] = sprintf(
-                    '  %s (%s:%d) ccn2=%s lines=%s params=%d%s',
-                    $measurement['symbol'],
-                    $measurement['path'],
-                    $measurement['line'],
-                    $measurement['ccn2'] === null ? 'n/a' : (string) $measurement['ccn2'],
-                    $measurement['lines'] === null ? 'n/a' : (string) $measurement['lines'],
-                    $measurement['params'],
-                    $accepted === null ? '' : " accepted={$accepted}",
+                $lines[] = $this->measurementLine(
+                    $measurement,
+                    $scope,
+                    $policy['baseline']['accepted'][$measurement['symbol']] ?? null,
                 );
             }
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param MeasurementRow $measurement
+     */
+    private function measurementLine(array $measurement, Scope $scope, ?int $accepted): string
+    {
+        $values = match ($scope) {
+            Scope::Method => $this->methodValues($measurement),
+            Scope::ClassLike => $this->classValues($measurement),
+        };
+
+        return sprintf(
+            '  %s (%s:%d) %s%s',
+            $measurement['symbol'],
+            $measurement['path'],
+            $measurement['line'],
+            $values,
+            $accepted === null ? '' : " accepted={$accepted}",
+        );
+    }
+
+    /**
+     * @param MeasurementRow $measurement
+     */
+    private function methodValues(array $measurement): string
+    {
+        return sprintf(
+            'ccn2=%s lines=%s params=%d',
+            $this->orNotApplicable($measurement['ccn2'] ?? null),
+            $this->orNotApplicable($measurement['lines'] ?? null),
+            $measurement['params'] ?? 0,
+        );
+    }
+
+    /**
+     * @param MeasurementRow $measurement
+     */
+    private function classValues(array $measurement): string
+    {
+        return sprintf(
+            'methods=%d properties=%d inheritance=%s classLines=%d',
+            $measurement['methods'] ?? 0,
+            $measurement['properties'] ?? 0,
+            $this->orNotApplicable($measurement['inheritance'] ?? null),
+            $measurement['classLines'] ?? 0,
+        );
+    }
+
+    private function orNotApplicable(?int $value): string
+    {
+        return $value === null ? 'n/a' : (string) $value;
     }
 
     /**

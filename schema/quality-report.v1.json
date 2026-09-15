@@ -58,7 +58,7 @@
           "$ref": "#/$defs/baseline"
         },
         "measurements": {
-          "description": "Every method the metric applied to. Omitted from --quality-json's findings-only report.",
+          "description": "Every symbol the metric applied to. Omitted from --quality-json's findings-only report.",
           "type": "array",
           "items": { "$ref": "#/$defs/measurement" }
         },
@@ -130,6 +130,11 @@
         "objects": { "type": "integer", "minimum": 0 },
         "withAst": { "type": "integer", "minimum": 0 },
         "methodsMeasured": { "type": "integer", "minimum": 0 },
+        "classesMeasured": {
+          "description": "How many class-like declarations a class-scoped policy measured. Zero for a method-scoped one.",
+          "type": "integer",
+          "minimum": 0
+        },
         "skipped": {
           "type": "array",
           "items": { "$ref": "#/$defs/skippedFile" }
@@ -154,16 +159,51 @@
       }
     },
     "measurement": {
+      "description": "A method row for a method-scoped policy, a class row for a class-scoped one.",
+      "oneOf": [
+        { "$ref": "#/$defs/methodMeasurement" },
+        { "$ref": "#/$defs/classMeasurement" }
+      ]
+    },
+    "methodMeasurement": {
       "type": "object",
       "required": ["symbol", "path", "line", "ccn2", "lines", "params"],
       "additionalProperties": false,
       "properties": {
-        "symbol": { "type": "string" },
+        "symbol": {
+          "description": "Fully qualified Class::method.",
+          "type": "string"
+        },
         "path": { "type": "string" },
         "line": { "type": "integer", "minimum": 0 },
         "ccn2": { "type": ["integer", "null"], "minimum": 1 },
         "lines": { "type": ["integer", "null"], "minimum": 0 },
         "params": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "classMeasurement": {
+      "type": "object",
+      "required": ["symbol", "path", "line", "methods", "properties", "inheritance", "classLines"],
+      "additionalProperties": false,
+      "properties": {
+        "symbol": {
+          "description": "Fully qualified class, interface, trait or enum name.",
+          "type": "string"
+        },
+        "path": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "methods": {
+          "description": "Declared methods, without the accessors when the policy that produced the row was configured to ignore them.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "properties": { "type": "integer", "minimum": 0 },
+        "inheritance": {
+          "description": "Null for a declaration that extends no class: an interface, a trait or an enum.",
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "classLines": { "type": "integer", "minimum": 0 }
       }
     },
     "violation": {
