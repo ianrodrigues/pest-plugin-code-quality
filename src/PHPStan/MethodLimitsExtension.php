@@ -22,6 +22,10 @@ final class MethodLimitsExtension implements MethodsClassReflectionExtension
         'toHaveMethodComplexityAtMost',
         'toHaveMethodLinesAtMost',
         'toHaveMethodParametersAtMost',
+        'toHaveMethodsAtMost',
+        'toHavePropertiesAtMost',
+        'toHaveInheritanceDepthAtMost',
+        'toHaveClassLinesAtMost',
     ];
 
     private const array TYPES = [
