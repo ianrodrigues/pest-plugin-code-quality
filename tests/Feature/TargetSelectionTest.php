@@ -14,6 +14,8 @@ it('selects an exact class', function (): void {
         'Method complexity (ccn2 v1): 2',
         'Allowed: at most 1',
         'Exceeded by: 1',
+        'Counted:',
+        '  1 x if (line 22)',
         '',
         'IanRodrigues\CodeQuality\Tests\Fixtures\App\Http\Controllers\OrderController::show',
         'tests/Fixtures/App/Http/Controllers/OrderController.php:9',
@@ -21,6 +23,8 @@ it('selects an exact class', function (): void {
         'Method complexity (ccn2 v1): 2',
         'Allowed: at most 1',
         'Exceeded by: 1',
+        'Counted:',
+        '  1 x if (line 13)',
     ]));
 });
 

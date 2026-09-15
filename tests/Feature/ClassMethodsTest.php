@@ -28,6 +28,11 @@ it('reports the offending class, its declaration and the excess', function (): v
         'Class methods (methods v1): 4',
         'Allowed: at most 3',
         'Exceeded by: 1',
+        'Counted:',
+        '  __construct (line 13)',
+        '  id (line 17)',
+        '  setSize (line 22)',
+        '  describe (line 29)',
         '',
         '1 class exceeds the limit',
     ]));

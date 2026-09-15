@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use IanRodrigues\CodeQuality\Analysis\Contribution;
 use IanRodrigues\CodeQuality\Analysis\MethodMeasurements;
 use IanRodrigues\CodeQuality\Analysis\Support\SymbolLocation;
 use IanRodrigues\CodeQuality\Metrics\Metric;
@@ -151,6 +152,161 @@ it('names the longest variable identifier on a variableName failure', function (
         'Longest: $someVeryLongVariableName (28)',
         'Allowed: at most 20',
         'Exceeded by: 8',
+        '',
+        '1 method exceeds the limit',
+    ]));
+});
+
+it('groups ccn2 contributions by construct, most frequent first then earliest line', function (): void {
+    $contributions = [
+        new Contribution('if', 15),
+        new Contribution('foreach', 14),
+        new Contribution('??', 19),
+        new Contribution('if', 22),
+        new Contribution('&&', 22),
+        new Contribution('&&', 22),
+        new Contribution('??', 20),
+        new Contribution('if', 27),
+    ];
+
+    $result = new PolicyResult(
+        Policy::complexity(10),
+        [new Violation('App\Foo::bar', 'app/Foo.php', 42, Metric::Ccn2, 11, 10, contributions: $contributions)],
+        objectsSeen: 1,
+        methodsMeasured: 1,
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Foo::bar',
+        'app/Foo.php:42',
+        '',
+        'Method complexity (ccn2 v1): 11',
+        'Allowed: at most 10',
+        'Exceeded by: 1',
+        'Counted:',
+        '  3 x if (lines 15, 22, 27)',
+        '  2 x ?? (lines 19, 20)',
+        '  2 x && (lines 22, 22)',
+        '  1 x foreach (line 14)',
+        '',
+        '1 method exceeds the limit',
+    ]));
+});
+
+it('lists the first ten method contributions then points at the JSON report', function (): void {
+    $contributions = array_map(
+        static fn (int $i): Contribution => new Contribution(sprintf('method%02d', $i), $i * 10),
+        range(1, 12),
+    );
+
+    $result = new PolicyResult(
+        Policy::methods(10),
+        [new Violation('App\Wide', 'app/Wide.php', 5, Metric::Methods, 12, 10, contributions: $contributions)],
+        objectsSeen: 1,
+        methodsMeasured: 0,
+        classesMeasured: 1,
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Wide',
+        'app/Wide.php:5',
+        '',
+        'Class methods (methods v1): 12',
+        'Allowed: at most 10',
+        'Exceeded by: 2',
+        'Counted:',
+        '  method01 (line 10)',
+        '  method02 (line 20)',
+        '  method03 (line 30)',
+        '  method04 (line 40)',
+        '  method05 (line 50)',
+        '  method06 (line 60)',
+        '  method07 (line 70)',
+        '  method08 (line 80)',
+        '  method09 (line 90)',
+        '  method10 (line 100)',
+        '  ... and 2 more (see the JSON report)',
+        '',
+        '1 class exceeds the limit',
+    ]));
+});
+
+it('lists inheritance contributions without a line suffix', function (): void {
+    $contributions = [
+        new Contribution('App\Models\BaseModel', null),
+        new Contribution('Illuminate\Database\Eloquent\Model', null),
+    ];
+
+    $result = new PolicyResult(
+        Policy::inheritance(2),
+        [new Violation('App\Models\Order', 'app/Models/Order.php', 8, Metric::Inheritance, 3, 2, contributions: $contributions)],
+        objectsSeen: 1,
+        methodsMeasured: 0,
+        classesMeasured: 1,
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Models\Order',
+        'app/Models/Order.php:8',
+        '',
+        'Inheritance depth (inheritance v1): 3',
+        'Allowed: at most 2',
+        'Exceeded by: 1',
+        'Counted:',
+        '  App\Models\BaseModel',
+        '  Illuminate\Database\Eloquent\Model',
+        '',
+        '1 class exceeds the limit',
+    ]));
+});
+
+it('prints no Counted line when a lines violation carries no contributions', function (): void {
+    $result = new PolicyResult(
+        Policy::lines(50),
+        [new Violation('App\Foo::bar', 'app/Foo.php', 42, Metric::Lines, 60, 50)],
+        objectsSeen: 1,
+        methodsMeasured: 1,
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Foo::bar',
+        'app/Foo.php:42',
+        '',
+        'Method lines (lines v1): 60',
+        'Allowed: at most 50',
+        'Exceeded by: 10',
+        '',
+        '1 method exceeds the limit',
+    ]));
+});
+
+it('keeps the Longest line and prints no Counted line on a variableName failure', function (): void {
+    $method = new MethodMeasurements(
+        new SymbolLocation('App\Foo::baz', 'app/Foo.php', 12, 15),
+        ccn2: 1,
+        lines: 3,
+        params: 1,
+        methodName: 3,
+        variableName: 30,
+        longestVariableIdentifier: 'anotherRatherLongVariableName',
+    );
+
+    $result = new PolicyResult(
+        Policy::variableNames(20),
+        [new Violation('App\Foo::baz', 'app/Foo.php', 12, Metric::VariableName, 30, 20)],
+        objectsSeen: 1,
+        methodsMeasured: 1,
+        measurements: [$method],
+    );
+
+    expect(FailureReport::for($result))->toBe(implode("\n", [
+        'App\Foo::baz',
+        'app/Foo.php:12',
+        '',
+        'Variable name length (variableName v1): 30',
+        'Longest: $anotherRatherLongVariableName (30)',
+        'Allowed: at most 20',
+        'Exceeded by: 10',
         '',
         '1 method exceeds the limit',
     ]));

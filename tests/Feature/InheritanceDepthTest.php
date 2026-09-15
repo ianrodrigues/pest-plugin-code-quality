@@ -22,6 +22,8 @@ it('reports the offending class, its declaration and the excess', function (): v
         'Inheritance depth (inheritance v1): 1',
         'Allowed: at most 0',
         'Exceeded by: 1',
+        'Counted:',
+        '  IanRodrigues\CodeQuality\Tests\Fixtures\App\Structure\Ancestor',
         '',
         '1 class exceeds the limit',
     ]));
