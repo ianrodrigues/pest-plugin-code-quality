@@ -12,11 +12,9 @@ use IanRodrigues\CodeQuality\Selection\Coverage;
 final readonly class PolicyResult
 {
     /**
-     * Every violation is carried, never only the first. `$measurements`
-     * carries every symbol the metric applied to, not only offenders, so
-     * inspection tooling can show a full picture of what was measured. One
-     * of `$methodsMeasured` and `$classesMeasured` is always zero: a
-     * policy measures the scope of its own metric.
+     * `$measurements` carries every symbol the metric applied to, not just
+     * the offenders, so inspection tooling sees the full picture. One of
+     * `$methodsMeasured`/`$classesMeasured` is always zero, per metric scope.
      *
      * @param list<Violation> $violations
      * @param list<ClassMeasurements|MethodMeasurements> $measurements

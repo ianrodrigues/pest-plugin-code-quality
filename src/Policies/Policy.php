@@ -78,10 +78,9 @@ final readonly class Policy
     }
 
     /**
-     * Null when the metric does not apply to the symbol, as `ccn2` and
-     * `lines` do not to abstract and interface methods, `inheritance` does
-     * not to an interface, and every method-scoped metric does not to a
-     * class.
+     * Null when the metric does not apply: `ccn2`/`lines` to an abstract or
+     * interface method, `inheritance` to an interface, and any
+     * method-scoped metric to a class.
      */
     public function valueFor(ClassMeasurements|MethodMeasurements $symbol): ?int
     {
