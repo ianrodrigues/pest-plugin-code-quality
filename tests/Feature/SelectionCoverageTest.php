@@ -31,9 +31,8 @@ function coverage_of(PolicyResult $result): Coverage
 
 /**
  * Verifying the throwaway expectation here, synchronously, keeps its
- * lazy self-verification from firing later from `__destruct()` — where an
- * exception this suite intentionally provokes (`SkippedFilesFound` under
- * strict mode, for one) would otherwise become an uncatchable fatal error.
+ * lazy self-verification from firing later in `__destruct()`, where an
+ * exception this suite intentionally provokes would otherwise be an uncatchable fatal error.
  *
  * @return array{PolicyRunner, Targets, LayerOptions}
  */

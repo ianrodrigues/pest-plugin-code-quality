@@ -10,11 +10,8 @@ use Symfony\Component\Process\Process;
 
 /**
  * A throwaway Pest project under `tests/Fixtures`, installed once per
- * suite run since `composer install` there is expensive — the first
- * caller pays for it, everyone after reuses the same `vendor/`.
- *
- * `Project` is read-only and shared; `Adoption` is rewritten by baseline
- * tests, hence its own project.
+ * suite run since `composer install` is expensive there. `Project` is
+ * read-only and shared; `Adoption` is rewritten by baseline tests.
  */
 final class FixtureProject
 {
@@ -69,10 +66,9 @@ final class FixtureProject
     }
 
     /**
-     * Clears this suite's own `--parallel` env vars before spawning the
-     * fixture's pest, or it would believe itself already a worker;
-     * `Symfony\Process` drops a var from the child when set to `false`,
-     * rather than inheriting it.
+     * Clears this suite's own `--parallel` env vars so the fixture's pest
+     * does not believe itself already a worker; `Symfony\Process` drops a
+     * var from the child when set to `false`, rather than inheriting it.
      *
      * @return array<string, false>
      */
@@ -94,8 +90,7 @@ final class FixtureProject
     /**
      * The fixture requires this package through a path repository that
      * copies rather than symlinks, so the installed copy would otherwise
-     * still be whatever `composer install` found the first time the suite
-     * ever ran here.
+     * stay whatever `composer install` found on the first run.
      */
     private static function sync(string $path): void
     {
